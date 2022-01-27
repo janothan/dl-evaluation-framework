@@ -1,0 +1,7 @@
+http://dbpedia.org/resource/Alcoa,_Tennessee
+http://dbpedia.org/resource/Hunnewell,_Kansas
+http://dbpedia.org/resource/American_Fork,_Utah
+http://dbpedia.org/resource/Belton,_Texas
+http://dbpedia.org/resource/Charlotte,_North_Carolina
+http://dbpedia.org/resource/Attica,_Kansas
+http://dbpedia.org/resource/Hisar_Urban_Agglomeration
