@@ -2,7 +2,7 @@ import logging.config
 from pathlib import Path
 
 # some logging configuration
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Union
 
 import numpy as np
 
@@ -85,7 +85,9 @@ class Evaluator:
         pass
 
     def write_uris_of_interest_to_file(self, file_to_write: str) -> None:
-        self.write_set_to_file(set_to_write=self.get_uris_of_interest(), file_to_write=file_to_write)
+        self.write_set_to_file(
+            set_to_write=self.get_uris_of_interest(), file_to_write=file_to_write
+        )
 
     def get_uris_of_interest(self) -> Set[str]:
         result = set()
@@ -98,18 +100,20 @@ class Evaluator:
                 for sub_tc_dir in Path.iterdir(Path(tc_dir)):
                     # example for sub_tc_dir: "500"
 
-                    #positives
+                    # positives
                     positive_file_path = sub_tc_dir.joinpath("positives.txt").resolve()
                     result.update(self.read_iris_from_file(str(positive_file_path)))
 
-                    #negatives
+                    # negatives
                     negative_file_path = sub_tc_dir.joinpath("negatives.txt").resolve()
                     result.update(self.read_iris_from_file(str(negative_file_path)))
 
-                    #hard negatives
+                    # hard negatives
                     hard_negatives_path = sub_tc_dir.joinpath("negatives_hard.txt")
                     if hard_negatives_path.is_file():
-                        result.update(self.read_iris_from_file(str(hard_negatives_path.resolve())))
+                        result.update(
+                            self.read_iris_from_file(str(hard_negatives_path.resolve()))
+                        )
         return result
 
     @classmethod
@@ -134,26 +138,67 @@ class Evaluator:
         return result
 
     def write_set_to_file(self, set_to_write: Set[str], file_to_write: str) -> None:
+        """Write ethe provided set to file (one set item per line).
+
+        Parameters
+        ----------
+        set_to_write : str
+        file_to_write : str
+
+        Returns
+        -------
+            None
+        """
         with open(file_to_write, "w+", encoding="utf-8") as f:
             for element in set_to_write:
                 f.write(element + "\n")
 
     @classmethod
-    def read_vector_txt_file(cls, vector_file: str) -> Dict:
+    def read_vector_txt_file(cls, vector_file: str) -> Dict[str, np.ndarray]:
         result = {}
         with open(vector_file, "r", encoding="utf-8") as vector_file:
             for line in vector_file:
                 line = line.replace("\n", "").replace("\r", "")
                 line = line.strip()
                 elements = line.split(" ")
-                if len(elements) > 0:
+                if len(elements) > 2:
                     result[elements[0]] = np.array(elements[1:]).astype(float)
                 else:
-                    logger.warning("Empty line!")
+                    logger.warning("Empty line or line with only 2 elements!")
         return result
 
     @classmethod
     def reduce_vectors(
-        cls, original_vector_file: str, reduced_vector_file_to_write: str
+        cls,
+        original_vector_file: str,
+        reduced_vector_file_to_write: str,
+        entities_of_interest: Union[Set[str], str],
     ) -> None:
-        pass
+        """
+
+        Parameters
+        ----------
+        original_vector_file : str
+        reduced_vector_file_to_write : str
+        entities_of_interest : Union[Set[str], str]
+            Either a file path to the file that contains the node of interest or a set of already parsed nodes of
+            interest.
+
+        Returns
+        -------
+            None
+        """
+        if type(entities_of_interest) == str:
+            entities_of_interest = cls.read_iris_from_file(
+                file_to_read_from=entities_of_interest
+            )
+
+        with open(
+            reduced_vector_file_to_write, "w+", encoding="utf-8"
+        ) as file_to_write:
+            with open(original_vector_file, "r", encoding="utf-8") as file_to_read:
+                for line in file_to_read:
+                    line_elements = line.split(" ")
+                    if len(line_elements) > 2:
+                        if line_elements[0] in entities_of_interest:
+                            file_to_write.write(line + "\n")
