@@ -8,6 +8,8 @@ import logging.config
 import pandas as pd
 from dataclasses import dataclass
 
+from dl_evaluation_framework.evaluation_manager import EvaluationManager
+
 logconf_file = Path.joinpath(Path(__file__).parent.resolve(), "log.conf")
 logging.config.fileConfig(fname=logconf_file, disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
@@ -26,11 +28,16 @@ class FeatureLabelTuple:
     missed: Set[str]
 
 
+@dataclass(frozen=True)
+class EvaluationResult:
+    accuracy: float
+
+
 class ClassificationEvaluator(ABC):
     @abstractmethod
     def evaluate(
         self, data_directory: str, vectors: Dict[str, np.ndarray], results_file: str
-    ) -> None:
+    ) -> EvaluationResult:
         """
 
         Parameters
@@ -44,7 +51,7 @@ class ClassificationEvaluator(ABC):
 
         Returns
         -------
-            None
+            EvaluationResult
         """
         pass
 
@@ -55,7 +62,6 @@ class ClassificationEvaluator(ABC):
         except EmptyDataError as e:
             logger.error(f"The provided file '{file}' is empty. Returning None.")
             return None
-
 
     @staticmethod
     def parse_train_test(
@@ -102,7 +108,7 @@ class ClassificationEvaluator(ABC):
             concept = row[0]
             if concept in vectors:
                 features.append(vectors[concept])
-                labels.append(concept)
+                labels.append(row[1])
             else:
                 missed.add(concept)
 
@@ -115,12 +121,22 @@ class DecisionTreeClassificationEvaluator(ClassificationEvaluator):
 
     def evaluate(
         self, data_directory: str, vectors: Dict[str, np.ndarray], results_file: str
-    ) -> None:
+    ) -> EvaluationResult:
         train_test = super().parse_train_test(data_directory=data_directory)
 
         # train
-        features_labels = super().prepare_for_ml(vectors=vectors , label_df=train_test.train)
+        features_labels_train = super().prepare_for_ml(
+            vectors=vectors, label_df=train_test.train
+        )
+        self.classifier.fit(
+            X=features_labels_train.features, y=features_labels_train.labels
+        )
 
-        self.classifier.fit(X=features_labels.features, y=features_labels.labels)
-
-
+        # test
+        features_labels_test = super().prepare_for_ml(
+            vectors=vectors, label_df=train_test.test
+        )
+        accuracy = self.classifier.score(
+            X=features_labels_test.features, y=features_labels_test.labels
+        )
+        return EvaluationResult(accuracy=accuracy)

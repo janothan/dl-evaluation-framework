@@ -1,1 +1,2 @@
-shanghai 0
+shanghai    0
+munich  1

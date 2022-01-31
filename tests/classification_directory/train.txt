@@ -3,3 +3,4 @@ germany 1
 europe  1
 china   0
 beijing 0
+xian    0

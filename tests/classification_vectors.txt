@@ -5,3 +5,4 @@ munich 10 11 12
 china -1 -2 -3
 beijing -4 -5 -6
 shanghai -5 -6 -7
+xian -5 -6 -7
