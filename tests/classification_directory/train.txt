@@ -1,0 +1,5 @@
+berlin  1
+germany 1
+europe  1
+china   0
+beijing 0

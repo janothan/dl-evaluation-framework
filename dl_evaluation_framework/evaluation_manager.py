@@ -11,7 +11,9 @@ logging.config.fileConfig(fname=logconf_file, disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
 
 
-class Evaluator:
+class EvaluationManager:
+    """Highest coordination layer for the evaluation process."""
+
     def __init__(self, test_directory: str):
         """Constructor
 
@@ -54,7 +56,7 @@ class Evaluator:
             None
         """
 
-        # check whether the directory exists
+        # check whether the result directory exists
         result_directory_path = Path(result_directory)
         if result_directory_path.exists():
             logger.error(
@@ -64,24 +66,25 @@ class Evaluator:
             )
             return
 
-        # check query directory existence
-        query_directory_path = Path(self.test_directory)
-        if not query_directory_path.exists():
+        # check whether test directory existence
+        test_directory_path = Path(self.test_directory)
+        if not test_directory_path.exists():
             logger.error(
-                f"The query directory does not exist.\n"
-                f"Specified directory: {query_directory_path.resolve()}\n"
+                f"The test directory does not exist.\n"
+                f"Specified directory: {test_directory_path.resolve()}\n"
                 f"Aborting program!"
             )
             return
 
-        # check whether query directory is a directory
-        if query_directory_path.is_file():
+        # check whether test directory is a directory
+        if test_directory_path.is_file():
             logger.error(
-                "The query directory must be a directory not a file! Aborting program!"
+                "The test directory must be a directory not a file! Aborting program!"
             )
             return
 
-        # TODO
+        self.vector_map = self.read_vector_txt_file(vector_file=vector_file)
+
         pass
 
     def write_uris_of_interest_to_file(self, file_to_write: str) -> None:
