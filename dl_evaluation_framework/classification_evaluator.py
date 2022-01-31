@@ -31,6 +31,7 @@ class FeatureLabelTuple:
 @dataclass(frozen=True)
 class EvaluationResult:
     accuracy: float
+    missed: Set[str]
 
 
 class ClassificationEvaluator(ABC):
@@ -124,6 +125,8 @@ class DecisionTreeClassificationEvaluator(ClassificationEvaluator):
     ) -> EvaluationResult:
         train_test = super().parse_train_test(data_directory=data_directory)
 
+        missed: Set[str] = set()
+
         # train
         features_labels_train = super().prepare_for_ml(
             vectors=vectors, label_df=train_test.train
@@ -132,6 +135,8 @@ class DecisionTreeClassificationEvaluator(ClassificationEvaluator):
             X=features_labels_train.features, y=features_labels_train.labels
         )
 
+        missed.update(features_labels_train.missed)
+
         # test
         features_labels_test = super().prepare_for_ml(
             vectors=vectors, label_df=train_test.test
@@ -139,4 +144,6 @@ class DecisionTreeClassificationEvaluator(ClassificationEvaluator):
         accuracy = self.classifier.score(
             X=features_labels_test.features, y=features_labels_test.labels
         )
-        return EvaluationResult(accuracy=accuracy)
+        missed.update(features_labels_test.missed)
+
+        return EvaluationResult(accuracy=accuracy, missed=missed)

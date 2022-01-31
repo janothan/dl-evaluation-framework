@@ -25,3 +25,4 @@ def test_decision_tree_classifier():
         results_file="./some-file.txt",
     )
     assert r.accuracy == 1.0
+    assert "stuttgart" in r.missed
