@@ -1,10 +1,15 @@
 import logging.config
 from pathlib import Path
+from classification_evaluator import (
+    ClassificationEvaluator,
+    DecisionTreeClassificationEvaluator,
+)
 
 # some logging configuration
 from typing import Dict, List, Set, Union
 
 import numpy as np
+import pandas as pd
 
 logconf_file = Path.joinpath(Path(__file__).parent.resolve(), "log.conf")
 logging.config.fileConfig(fname=logconf_file, disable_existing_loggers=False)
@@ -24,30 +29,47 @@ class EvaluationManager:
         """
         self.test_directory = test_directory
 
-    DEFAULT_RESULTS_DIRECTORY = "./results"
+    DEFAULT_RESULTS_DIRECTORY: str = "./results"
     """The default results directory."""
+
+    DEFAULT_CLASSIFIERS: List[ClassificationEvaluator] = [
+        DecisionTreeClassificationEvaluator()
+    ]
+
+    INDIVIDUAL_RESULT_COLUMNS: List[str] = [
+        "TC Collection",
+        "TC Group",
+        "TC Size Group",
+        "TC Actual Size",
+        "Classifier",
+        "Accuracy",
+        "# missing URLs",
+    ]
 
     def evaluate(
         self,
-        vector_file: str,
+        vector_files: List[str],
         result_directory: str = DEFAULT_RESULTS_DIRECTORY,
-        tc_collection: str = "",
-        tc: str = "",
-        sub_tc="",
+        classifiers: List[ClassificationEvaluator] = None,
+        tc_collection: Set[str] = None,
+        tc: Set[str] = None,
+        sub_tc: Set[str] = None,
     ) -> None:
-        """Main evaluation function.
+        """Main evaluation function. Note that the test directory has already been set.
 
         Parameters
         ----------
-        vector_file : str
+        vector_files : str
             The vector txt file. Must be utf-8 encoded.
         result_directory : str
             Optional. The result directory. The directory must not exist (otherwise, the method will not be executed).
-        tc_collection : str
+        classifiers : List[ClassificationEvaluator]
+            Optional. The classifiers that shall be used.
+        tc_collection : Set[str]
             Optional. The test case collection, e.g. "tc4"
-        tc : str
+        tc : Set[str]
             Optional. The actual test case, e.g. "people".
-        sub_tc : str
+        sub_tc : Set[str]
             Optional. The sub test case, typically a number indicating the size of the test
             case such as "500".
 
@@ -83,9 +105,124 @@ class EvaluationManager:
             )
             return
 
-        self.vector_map = self.read_vector_txt_file(vector_file=vector_file)
+        if classifiers is None:
+            logger.info(
+                "Using default classifiers (EvaluationManager.DEFAULT_CLASSIFIERS)."
+            )
+            classifiers = EvaluationManager.DEFAULT_CLASSIFIERS
 
-        pass
+        result = pd.DataFrame(
+            columns=EvaluationManager.INDIVIDUAL_RESULT_COLUMNS, index=None
+        )
+
+        # loop over all vector files:
+        for vector_file in vector_files:
+            vector_map = self.read_vector_txt_file(vector_file=vector_file)
+
+            # loop over all classifiers
+            for classifier in classifiers:
+                classifier_result = self.evaluate_vector_map(
+                    vector_map=vector_map,
+                    classifier=classifier,
+                    tc_collection=tc_collection,
+                    tc=tc,
+                    sub_tc=sub_tc,
+                )
+                result = result.append(other=classifier_result, ignore_index=True)
+
+        result.to_csv(
+            path_or_buf=result_directory_path.joinpath("individual_results.csv"),
+            index=False,
+            header=True,
+            encoding="utf-8",
+        )
+
+    def evaluate_vector_map(
+        self,
+        vector_map: Dict[str, np.ndarray],
+        classifier: ClassificationEvaluator,
+        tc_collection: Set[str] = None,
+        tc: Set[str] = None,
+        sub_tc: Set[str]=None,
+    ) -> pd.DataFrame:
+        """Evaluate a single vector map.
+
+        Parameters
+        ----------
+        vector_map : Dict[str, np.ndarray]
+            Vectors (more precisely: a set of vectors) to be evaluated.
+        classifier : ClassificationEvaluator
+            The classifier to be used on the set of vectors.
+        tc_collection : Set[str]
+            Optional. The test case collections, e.g. ["tc4"]
+        tc : Set[str]
+            Optional. The actual test cases, e.g. ["people"].
+        sub_tc : Set[str]
+            Optional. The sub test case, typically a number indicating the size group of the test
+            case such as ["500"].
+
+        Returns
+        -------
+            A dataframe containing the result statistics.
+        """
+
+        result = pd.DataFrame(
+            columns=EvaluationManager.INDIVIDUAL_RESULT_COLUMNS, index=None
+        )
+
+        # jump into every test case
+        for tc_collection_dir in Path.iterdir(Path(self.test_directory)):
+            # example for tc_collection_dir: "tc1"
+            if tc_collection is not None and tc_collection != "":
+                if tc_collection_dir.name not in tc_collection:
+                    logger.info(
+                        f"Skipping '{tc_collection_dir.resolve()}' (not in tc_collection)"
+                    )
+                    continue
+            for tc_dir in Path.iterdir(Path(tc_collection_dir)):
+                # example for tc_dir: "person"
+                if tc is not None and tc != "":
+                    if tc_dir.name not in tc:
+                        logger.info(f"Skipping '{tc_dir.resolve()}' (not in tc)")
+                        continue
+                for sub_tc_dir in Path.iterdir(Path(tc_dir)):
+                    # example for sub_tc_dir: "500"
+                    if sub_tc is not None and sub_tc != "":
+                        if sub_tc_dir.name not in sub_tc:
+                            logger.info(
+                                f"Skipping '{sub_tc_dir.resolve()}' (not in sub_tc)"
+                            )
+                            continue
+                    train_test_path = sub_tc_dir.joinpath("train_test")
+                    if not train_test_path.exists():
+                        logger.warning(
+                            f"Could not find '{train_test_path}'. Continue evaluation."
+                        )
+                        continue
+                    eval_result = classifier.evaluate(
+                        data_directory=train_test_path, vectors=vector_map
+                    )
+                    result_row = pd.Series(
+                        [
+                            # TC Collection:
+                            tc_collection_dir.name,
+                            # TC Group:
+                            tc_dir.name,
+                            # TC Size Group:
+                            sub_tc_dir.name,
+                            # TC Actual Size:
+                            eval_result.gs_size,
+                            # Classifier
+                            eval_result.classifier_name,
+                            # Accuracy
+                            eval_result.accuracy,
+                            # # missing URLs
+                            eval_result.number_missed,
+                        ],
+                        index=result.columns,
+                    )
+                    result = result.append(result_row, ignore_index=True)
+        return result
 
     def write_uris_of_interest_to_file(self, file_to_write: str) -> None:
         self.write_set_to_file(

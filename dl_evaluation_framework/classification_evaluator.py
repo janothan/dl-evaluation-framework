@@ -33,13 +33,25 @@ class EvaluationResult:
     accuracy: float
     missed: Set[str]
 
+    @property
+    def number_missed(self):
+        return len(EvaluationResult.missed)
+
+    classifier_name: str
+    data_directory: str
+    gs_size: int
+    """Size of the gold standard, i.e. |positives| + |negatives|. Must be an even number.
+    """
+
 
 class ClassificationEvaluator(ABC):
     @abstractmethod
     def evaluate(
-        self, data_directory: str, vectors: Dict[str, np.ndarray], results_file: str
+        self,
+        data_directory: Union[str, Path],
+        vectors: Dict[str, np.ndarray],
     ) -> EvaluationResult:
-        """
+        """Perform an evaluation on the specified directory using the specified vectors.
 
         Parameters
         ----------
@@ -47,8 +59,6 @@ class ClassificationEvaluator(ABC):
             The directory where the test and train files reside.
         vectors : Dict[str, np.ndarray]
             The vectors that are to be used for the evaluation.
-        results_file : str
-            The results file that is to be written.
 
         Returns
         -------
@@ -119,13 +129,19 @@ class ClassificationEvaluator(ABC):
 class DecisionTreeClassificationEvaluator(ClassificationEvaluator):
     def __init__(self):
         self.classifier = tree.DecisionTreeClassifier()
+        self.classifier_name: str = "Decision_Tree"
 
     def evaluate(
-        self, data_directory: str, vectors: Dict[str, np.ndarray], results_file: str
+        self,
+        data_directory: Union[str, Path],
+        vectors: Dict[str, np.ndarray],
     ) -> EvaluationResult:
-        train_test = super().parse_train_test(data_directory=data_directory)
+        train_test: TrainTestTuple = super().parse_train_test(
+            data_directory=data_directory
+        )
 
         missed: Set[str] = set()
+        gs_size: int = len(train_test.train.index) + len(train_test.test.index)
 
         # train
         features_labels_train = super().prepare_for_ml(
@@ -134,7 +150,6 @@ class DecisionTreeClassificationEvaluator(ClassificationEvaluator):
         self.classifier.fit(
             X=features_labels_train.features, y=features_labels_train.labels
         )
-
         missed.update(features_labels_train.missed)
 
         # test
@@ -146,4 +161,10 @@ class DecisionTreeClassificationEvaluator(ClassificationEvaluator):
         )
         missed.update(features_labels_test.missed)
 
-        return EvaluationResult(accuracy=accuracy, missed=missed)
+        return EvaluationResult(
+            accuracy=accuracy,
+            missed=missed,
+            classifier_name=self.classifier_name,
+            data_directory=str(data_directory.resolve()),
+            gs_size=gs_size,
+        )

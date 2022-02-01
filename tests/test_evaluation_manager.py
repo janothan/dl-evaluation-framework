@@ -11,12 +11,12 @@ def test_results_dir_exists():
     if not rdir.exists():
         rdir.mkdir()
     evaluator = EvaluationManager(test_directory="")
-    evaluator.evaluate(vector_file="", result_directory=RESULTS_DIR_EXISTS_STR)
+    evaluator.evaluate(vector_files="", result_directory=RESULTS_DIR_EXISTS_STR)
 
 
 def test_query_dir_does_not_exist():
     evaluator = EvaluationManager(test_directory="DOES-NOT-EXIST")
-    evaluator.evaluate(vector_file="", result_directory="does-not-exist-either")
+    evaluator.evaluate(vector_files="", result_directory="does-not-exist-either")
 
 
 def test_read_vector_txt_file():
