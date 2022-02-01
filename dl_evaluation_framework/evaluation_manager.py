@@ -339,6 +339,19 @@ class EvaluationManager:
         -------
             None
         """
+        if original_vector_file is None or original_vector_file.strip() == "":
+            logger.error(
+                "Cannot reduce vector file because the provided file path is invalid."
+            )
+            return
+
+        if entities_of_interest is None or len(entities_of_interest) == 0:
+            logger.error(
+                "Cannot reduce vector file because the provided entities_of_interest file path is invalid "
+                "or the set is empty."
+            )
+            return
+
         if type(entities_of_interest) == str:
             entities_of_interest = cls.read_iris_from_file(
                 file_to_read_from=entities_of_interest
@@ -359,5 +372,5 @@ class EvaluationManager:
             try:
                 process_with_encoding(encoding="utf-8")
             except UnicodeDecodeError as ude:
-                logger.error("An unicode error occurred. Trying latin-1 next.")
+                logger.error("A unicode error occurred. Trying latin-1 next.", ude)
                 process_with_encoding(encoding="latin-1")

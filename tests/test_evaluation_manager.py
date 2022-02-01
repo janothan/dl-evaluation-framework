@@ -65,6 +65,21 @@ def test_reduce_vectors():
     assert "europa" in vects
     assert vects["europa"][0] == 1
 
+    # some negative tests
+    invalid_path_str = "./do-not-write.txt"
+    EvaluationManager.reduce_vectors(
+        original_vector_file="",
+        reduced_vector_file_to_write=invalid_path_str,
+        entities_of_interest="./tests/interest2.txt",
+    )
+    assert Path(invalid_path_str).exists() is False
+    EvaluationManager.reduce_vectors(
+        original_vector_file="./tests/test_vectors2.txt",
+        reduced_vector_file_to_write=invalid_path_str,
+        entities_of_interest="",
+    )
+    assert Path(invalid_path_str).exists() is False
+
 
 def teardown_module(module):
     dir1 = Path(RESULTS_DIR_EXISTS_STR)
