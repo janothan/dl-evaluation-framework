@@ -225,6 +225,17 @@ class EvaluationManager:
         return result
 
     def write_uris_of_interest_to_file(self, file_to_write: str) -> None:
+        """Write relevant URIs to an UTF-8 encoded file (one URI per line).
+
+        Parameters
+        ----------
+        file_to_write: str
+            The file that shall be written.
+
+        Returns
+        -------
+            None
+        """
         self.write_set_to_file(
             set_to_write=self.get_uris_of_interest(), file_to_write=file_to_write
         )
