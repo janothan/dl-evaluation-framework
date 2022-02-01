@@ -1,6 +1,6 @@
 import logging.config
 from pathlib import Path
-from classification_evaluator import (
+from dl_evaluation_framework.classification_evaluator import (
     ClassificationEvaluator,
     DecisionTreeClassificationEvaluator,
 )
