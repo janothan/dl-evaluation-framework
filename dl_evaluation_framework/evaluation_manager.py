@@ -354,7 +354,7 @@ class EvaluationManager:
                         line_elements = line.split(" ")
                         if len(line_elements) > 2:
                             if line_elements[0] in entities_of_interest:
-                                file_to_write.write(line + "\n")
+                                file_to_write.write(line)
 
             try:
                 process_with_encoding(encoding="utf-8")

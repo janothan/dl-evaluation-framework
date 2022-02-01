@@ -53,11 +53,28 @@ def test_reduce_vectors():
         entities_of_interest="./tests/interest2.txt",
     )
     assert Path(REDUCED_FILE_STR).exists()
+    blank_lines = 0
+    with open(REDUCED_FILE_STR, "r", encoding="utf-8") as rfile:
+        for line in rfile:
+            if line == "\n" or line.strip() == "":
+                blank_lines += 1
+    assert blank_lines <= 1
+    vects = EvaluationManager.read_vector_txt_file(REDUCED_FILE_STR)
+    assert len(vects) == 2
+    assert "world" in vects
+    assert "europa" in vects
+    assert vects["europa"][0] == 1
 
 
 def teardown_module(module):
     dir1 = Path(RESULTS_DIR_EXISTS_STR)
     if dir1.exists():
         dir1.rmdir()
-    Path(INTERESTED_NODES_STR).unlink()
-    Path(REDUCED_FILE_STR).unlink()
+
+    interested_noes_path = Path(INTERESTED_NODES_STR)
+    if interested_noes_path.exists():
+        Path(INTERESTED_NODES_STR).unlink()
+
+    reduced_file_path = Path(Path(REDUCED_FILE_STR))
+    if reduced_file_path.exists():
+        reduced_file_path.unlink()
