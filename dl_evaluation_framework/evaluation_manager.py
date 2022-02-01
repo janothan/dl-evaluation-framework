@@ -345,13 +345,11 @@ class EvaluationManager:
             )
 
         with open(
-            reduced_vector_file_to_write, "w+", encoding="utf-8", errors="ignore"
+            reduced_vector_file_to_write, "w+", encoding="utf-8"
         ) as file_to_write:
 
             def process_with_encoding(encoding: str):
-                with open(
-                    original_vector_file, "r", encoding=encoding, errors="ignore"
-                ) as file_to_read:
+                with open(original_vector_file, "r", encoding=encoding) as file_to_read:
                     for line in file_to_read:
                         line_elements = line.split(" ")
                         if len(line_elements) > 2:
