@@ -9,4 +9,5 @@ setup(
     author="Jan Portisch",
     author_email="jan@informatik.uni-mannheim.de",
     description="Evaluation program to evaluate vectors on description logics test sets.",
+    package_data={"dl_evaluation_framework": ["log.conf"]},
 )

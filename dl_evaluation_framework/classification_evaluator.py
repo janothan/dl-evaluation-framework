@@ -8,8 +8,6 @@ import logging.config
 import pandas as pd
 from dataclasses import dataclass
 
-from dl_evaluation_framework.evaluation_manager import EvaluationManager
-
 logconf_file = Path.joinpath(Path(__file__).parent.resolve(), "log.conf")
 logging.config.fileConfig(fname=logconf_file, disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
