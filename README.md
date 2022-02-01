@@ -2,6 +2,7 @@
 [![Python CI](https://github.com/janothan/dl-evaluation-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/janothan/dl-evaluation-framework/actions/workflows/ci.yml)
 [![Lint](https://github.com/janothan/dl-evaluation-framework/actions/workflows/black.yml/badge.svg)](https://github.com/janothan/dl-evaluation-framework/actions/workflows/black.yml)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Pre-Commit Enabled](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
 
 This project is tested with Python [3.8, 3.9, 3.10] on macOS and Linux.
 
