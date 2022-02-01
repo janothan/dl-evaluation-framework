@@ -345,13 +345,21 @@ class EvaluationManager:
             )
 
         with open(
-            reduced_vector_file_to_write, "w+", encoding="utf-8"
+            reduced_vector_file_to_write, "w+", encoding="utf-8", errors="ignore"
         ) as file_to_write:
-            with open(
-                original_vector_file, "r", encoding="utf-8", errors="ignore"
-            ) as file_to_read:
-                for line in file_to_read:
-                    line_elements = line.split(" ")
-                    if len(line_elements) > 2:
-                        if line_elements[0] in entities_of_interest:
-                            file_to_write.write(line + "\n")
+
+            def process_with_encoding(encoding: str):
+                with open(
+                    original_vector_file, "r", encoding=encoding, errors="ignore"
+                ) as file_to_read:
+                    for line in file_to_read:
+                        line_elements = line.split(" ")
+                        if len(line_elements) > 2:
+                            if line_elements[0] in entities_of_interest:
+                                file_to_write.write(line + "\n")
+
+            try:
+                process_with_encoding(encoding="utf-8")
+            except UnicodeDecodeError as ude:
+                logger.error("An unicode error occurred. Trying latin-1 next.")
+                process_with_encoding(encoding="latin-1")
