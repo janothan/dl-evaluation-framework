@@ -22,7 +22,6 @@ def test_decision_tree_classifier():
     r = evaluator.evaluate(
         data_directory="./tests/classification_directory",
         vectors=vectors,
-        results_file="./some-file.txt",
     )
     assert r.accuracy == 1.0
     assert "stuttgart" in r.missed

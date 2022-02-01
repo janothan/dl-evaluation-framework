@@ -134,6 +134,10 @@ class DecisionTreeClassificationEvaluator(ClassificationEvaluator):
         data_directory: Union[str, Path],
         vectors: Dict[str, np.ndarray],
     ) -> EvaluationResult:
+
+        if type(data_directory) == str:
+            data_directory = Path(data_directory)
+
         train_test: TrainTestTuple = super().parse_train_test(
             data_directory=data_directory
         )
