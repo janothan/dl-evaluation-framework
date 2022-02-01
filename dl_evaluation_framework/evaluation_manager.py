@@ -143,7 +143,7 @@ class EvaluationManager:
         classifier: ClassificationEvaluator,
         tc_collection: Set[str] = None,
         tc: Set[str] = None,
-        sub_tc: Set[str]=None,
+        sub_tc: Set[str] = None,
     ) -> pd.DataFrame:
         """Evaluate a single vector map.
 
