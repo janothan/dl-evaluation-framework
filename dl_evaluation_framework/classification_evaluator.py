@@ -33,7 +33,7 @@ class EvaluationResult:
 
     @property
     def number_missed(self):
-        return len(EvaluationResult.missed)
+        return len(self.missed)
 
     classifier_name: str
     data_directory: str
