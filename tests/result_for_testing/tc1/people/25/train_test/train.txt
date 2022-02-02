@@ -1,0 +1,10 @@
+http://dbpedia.org/resource/William_de_Valognes	1
+http://dbpedia.org/resource/Roy_Kinnear__Roy_Kinnear__1	1
+http://dbpedia.org/resource/Zachary_Taylor__Zachary_Taylor__1	1
+http://dbpedia.org/resource/Yolande_Palaeologina_of_Montferrat__Yolande__1	1
+http://dbpedia.org/resource/Rufus_King__Rufus_King__1	1
+http://dbpedia.org/resource/Zhang_Wei_(badminton,_born_1987)__Zhang_Wei__1	0
+http://dbpedia.org/resource/Yves_Marie_André__RC-clergy-stub__1	0
+http://dbpedia.org/resource/Robert_C._Miller__US-scientist-stub__1	0
+http://dbpedia.org/resource/ŽFK_Naše_Taksi__Maja_Stankovska__1	0
+http://dbpedia.org/resource/Xavier_Woods__UpUpDownDown__1	0

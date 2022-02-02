@@ -1,6 +1,8 @@
 from pathlib import Path
 from dl_evaluation_framework.evaluation_manager import EvaluationManager
+import shutil
 
+TEST_RESULTS_DIR_STR = "./test_results"
 RESULTS_DIR_EXISTS_STR = "./results_dir_exists"
 INTERESTED_NODES_STR = "./uris_of_interest.txt"
 REDUCED_FILE_STR = "./reduced_vectors.txt"
@@ -11,12 +13,12 @@ def test_results_dir_exists():
     if not rdir.exists():
         rdir.mkdir()
     evaluator = EvaluationManager(test_directory="")
-    evaluator.evaluate(vector_files="", result_directory=RESULTS_DIR_EXISTS_STR)
+    evaluator.evaluate(vector_files=[], result_directory=RESULTS_DIR_EXISTS_STR)
 
 
 def test_query_dir_does_not_exist():
     evaluator = EvaluationManager(test_directory="DOES-NOT-EXIST")
-    evaluator.evaluate(vector_files="", result_directory="does-not-exist-either")
+    evaluator.evaluate(vector_files=[], result_directory="does-not-exist-either")
 
 
 def test_read_vector_txt_file():
@@ -81,6 +83,14 @@ def test_reduce_vectors():
     assert Path(invalid_path_str).exists() is False
 
 
+def test_evaluate():
+    em = EvaluationManager(test_directory="./tests/result_for_testing")
+    em.evaluate(
+        vector_files=["./tests/classic_sg.txt"],
+        result_directory=TEST_RESULTS_DIR_STR,
+    )
+
+
 def teardown_module(module):
     dir1 = Path(RESULTS_DIR_EXISTS_STR)
     if dir1.exists():
@@ -88,8 +98,12 @@ def teardown_module(module):
 
     interested_noes_path = Path(INTERESTED_NODES_STR)
     if interested_noes_path.exists():
-        Path(INTERESTED_NODES_STR).unlink()
+        interested_noes_path.unlink()
 
     reduced_file_path = Path(Path(REDUCED_FILE_STR))
     if reduced_file_path.exists():
         reduced_file_path.unlink()
+
+    test_results_dir_path = Path(TEST_RESULTS_DIR_STR)
+    if test_results_dir_path.exists():
+        shutil.rmtree(test_results_dir_path)

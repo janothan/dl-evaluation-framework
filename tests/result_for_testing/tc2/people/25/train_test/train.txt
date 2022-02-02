@@ -1,0 +1,10 @@
+http://dbpedia.org/resource/Echmarcach_mac_Ragnaill	1
+http://dbpedia.org/resource/Yongxuan	1
+http://dbpedia.org/resource/Yuri_Brezhnev	1
+http://dbpedia.org/resource/Şehzade_Korkut	1
+http://dbpedia.org/resource/William_Richards_Castle	1
+http://dbpedia.org/resource/Willow_Macky__NewZealand-writer-stub__1	0
+http://dbpedia.org/resource/Valerie_Stanfill__US-judge-stub__1	0
+http://dbpedia.org/resource/Zacheus_J._Maher__RC-clergy-stub__1	0
+http://dbpedia.org/resource/Saint_Malachy__1190__1	0
+http://dbpedia.org/resource/Chris_Siegfried__Chris_Siegfried__1	0

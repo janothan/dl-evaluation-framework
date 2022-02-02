@@ -126,7 +126,6 @@ class ClassificationEvaluator(ABC):
 
 class DecisionTreeClassificationEvaluator(ClassificationEvaluator):
     def __init__(self):
-        self.classifier = tree.DecisionTreeClassifier()
         self.classifier_name: str = "Decision_Tree"
 
     def evaluate(
@@ -149,16 +148,20 @@ class DecisionTreeClassificationEvaluator(ClassificationEvaluator):
         features_labels_train = super().prepare_for_ml(
             vectors=vectors, label_df=train_test.train
         )
-        self.classifier.fit(
-            X=features_labels_train.features, y=features_labels_train.labels
-        )
+        classifier = tree.DecisionTreeClassifier()
+        try:
+            classifier.fit(
+                X=features_labels_train.features, y=features_labels_train.labels
+            )
+        except Exception as e:
+            logger.error("An error occurred while trying to fit the classifier.", e)
         missed.update(features_labels_train.missed)
 
         # test
         features_labels_test = super().prepare_for_ml(
             vectors=vectors, label_df=train_test.test
         )
-        accuracy = self.classifier.score(
+        accuracy = classifier.score(
             X=features_labels_test.features, y=features_labels_test.labels
         )
         missed.update(features_labels_test.missed)

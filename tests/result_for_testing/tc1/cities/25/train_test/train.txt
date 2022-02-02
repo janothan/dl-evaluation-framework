@@ -1,0 +1,10 @@
+http://dbpedia.org/resource/Gypsum,_Kansas	1
+http://dbpedia.org/resource/Panama_City,_Florida__Panama_City,_Florida__1	1
+http://dbpedia.org/resource/Burlington,_Wisconsin	1
+http://dbpedia.org/resource/West_Linn,_Oregon__West_Linn__1	1
+http://dbpedia.org/resource/Shreveport,_Louisiana	1
+http://dbpedia.org/resource/Shangri-La_City__Shangri-La__1	0
+http://dbpedia.org/resource/Sainte-Julie,_Quebec__Sainte-Julie__1	0
+http://dbpedia.org/resource/Shoreview,_Minnesota	0
+http://dbpedia.org/resource/Viraval,_Navsari	0
+http://dbpedia.org/resource/Sunnyvale,_California__Sunnyvale,_California__1	0

@@ -1,0 +1,10 @@
+http://dbpedia.org/resource/Riverside,_California	1
+http://dbpedia.org/resource/Nevada_City,_California	1
+http://dbpedia.org/resource/Circleville,_Ohio	1
+http://dbpedia.org/resource/Alton,_Illinois	1
+http://dbpedia.org/resource/Altamont,_Illinois	1
+http://dbpedia.org/resource/The_Dalles,_Oregon__The_Dalles__1	0
+http://dbpedia.org/resource/Woodland,_California__City_of_Woodland__1	0
+http://dbpedia.org/resource/Zhucheng	0
+http://dbpedia.org/resource/Madison,_Georgia__Madison,_Georgia__1	0
+http://dbpedia.org/resource/Yamagata,_Gifu____1	0

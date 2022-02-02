@@ -130,6 +130,9 @@ class EvaluationManager:
                 )
                 result = result.append(other=classifier_result, ignore_index=True)
 
+        logger.info(f"Making results directory: {result_directory}")
+        result_directory_path.mkdir()
+
         result.to_csv(
             path_or_buf=result_directory_path.joinpath("individual_results.csv"),
             index=False,
@@ -288,13 +291,16 @@ class EvaluationManager:
                 result.add(line)
         return result
 
-    def write_set_to_file(self, set_to_write: Set[str], file_to_write: str) -> None:
-        """Write ethe provided set to file (one set item per line).
+    @staticmethod
+    def write_set_to_file(set_to_write: Set[str], file_to_write: str) -> None:
+        """Write ethe provided set to a utf-8 encoded file (one set item per line).
 
         Parameters
         ----------
         set_to_write : str
+            The set that shall be persisted.
         file_to_write : str
+            The file that shall be written.
 
         Returns
         -------
@@ -313,7 +319,7 @@ class EvaluationManager:
                 line = line.strip()
                 elements = line.split(" ")
                 if len(elements) > 2:
-                    result[elements[0]] = np.array(elements[1:]).astype(float)
+                    result[elements[0]] = np.array(elements[1:]).astype(np.float32)
                 else:
                     logger.warning("Empty line or line with only 2 elements!")
         return result
