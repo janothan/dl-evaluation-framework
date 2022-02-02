@@ -1,4 +1,7 @@
 from pathlib import Path
+
+import pandas as pd
+
 from dl_evaluation_framework.evaluation_manager import EvaluationManager
 import shutil
 
@@ -90,6 +93,30 @@ def test_evaluate():
         result_directory=TEST_RESULTS_DIR_STR,
     )
 
+    # make sure files were written
+    individual_results_path = Path(TEST_RESULTS_DIR_STR).joinpath(
+        "individual_results.csv"
+    )
+    assert individual_results_path.exists()
+    individual_df = pd.read_csv(filepath_or_buffer=individual_results_path)
+    rows, cols = individual_df.shape
+    assert rows > 0
+    assert cols > 0
+
+    tcc_results_path = Path(TEST_RESULTS_DIR_STR).joinpath("tc_collection_results.csv")
+    assert tcc_results_path.exists()
+    tcc_df = pd.read_csv(filepath_or_buffer=tcc_results_path)
+    rows, cols = tcc_df.shape
+    assert rows > 0
+    assert cols > 0
+
+    tcg_results_path = Path(TEST_RESULTS_DIR_STR).joinpath("tc_group_results.csv")
+    assert tcg_results_path.exists()
+    tcg_df = pd.read_csv(filepath_or_buffer=tcg_results_path)
+    rows, cols = tcg_df.shape
+    assert rows > 0
+    assert cols > 0
+
 
 def teardown_module(module):
     dir1 = Path(RESULTS_DIR_EXISTS_STR)
@@ -105,5 +132,5 @@ def teardown_module(module):
         reduced_file_path.unlink()
 
     test_results_dir_path = Path(TEST_RESULTS_DIR_STR)
-    # if test_results_dir_path.exists():
-    # shutil.rmtree(test_results_dir_path)
+    if test_results_dir_path.exists():
+        shutil.rmtree(test_results_dir_path)

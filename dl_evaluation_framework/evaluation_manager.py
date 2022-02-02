@@ -170,7 +170,69 @@ class EvaluationManager:
             header=True,
             encoding="utf-8",
         )
+
+        # write the test case group aggregation to disk
+        tcg_aggregate_frame = EvaluationManager.calculated_tcg_aggregate_frame(
+            individual_result=individual_result
+        )
+        tcg_aggregate_frame.to_csv(
+            path_or_buf=result_directory_path.joinpath("tc_group_results.csv"),
+            index=False,
+            header=True,
+            encoding="utf-8",
+        )
+
         logger.info(f"Done writing the results. Check folder {result_directory_path}")
+
+    @staticmethod
+    def calculated_tcg_aggregate_frame(individual_result: pd.DataFrame) -> pd.DataFrame:
+        tcg_agg_result = pd.DataFrame(
+            columns=EvaluationManager.TCG_RESULT_COLUMNS, index=None
+        )
+
+        for tcg in individual_result["TC Group"].unique():
+            tcg_frame = individual_result.loc[individual_result["TC Group"] == tcg]
+
+            for size_group in tcg_frame["TC Size Group"].unique():
+                tcg_size_frame = tcg_frame.loc[tcg_frame["TC Size Group"] == size_group]
+
+                for classifier in tcg_size_frame["Classifier"].unique():
+
+                    tcg_size_classifier_frame = tcg_size_frame.loc[
+                        tcg_size_frame["Classifier"] == classifier
+                    ]
+
+                    mean_tc_act_size = tcg_size_classifier_frame[
+                        "TC Actual Size"
+                    ].mean()
+                    mean_acc = tcg_size_classifier_frame["Accuracy"].mean()
+                    mean_missing_urls = tcg_size_classifier_frame[
+                        "# missing URLs"
+                    ].mean()
+
+                    result_row = pd.Series(
+                        [
+                            # "TC Group"
+                            tcg,
+                            # "TC Size Group"
+                            size_group,
+                            # "AVG TC Actual Size"
+                            mean_tc_act_size,
+                            # "Classifier"
+                            classifier,
+                            # "Accuracy"
+                            mean_acc,
+                            # "AVG # missing URLs"
+                            mean_missing_urls,
+                        ],
+                        index=tcg_agg_result.columns,
+                    )
+
+                    tcg_agg_result = tcg_agg_result.append(
+                        result_row, ignore_index=True
+                    )
+
+        return tcg_agg_result
 
     @staticmethod
     def calculate_tcc_aggregate_frame(individual_result: pd.DataFrame) -> pd.DataFrame:
