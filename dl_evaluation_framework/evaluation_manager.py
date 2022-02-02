@@ -46,6 +46,23 @@ class EvaluationManager:
         "# missing URLs",
     ]
 
+    TCC_RESULT_COLUMNS: List[str] = [
+        "TC Collection",
+        "Size Group",
+        "Classifier",
+        "AVG Accuracy",
+        "AVG # missing URLs",
+    ]
+
+    TCG_RESULT_COLUMNS: List[str] = [
+        "TC Group",
+        "TC Size Group",
+        "AVG TC Actual Size",
+        "Classifier",
+        "Accuracy",
+        "AVG # missing URLs",
+    ]
+
     def evaluate(
         self,
         vector_files: List[str],
@@ -111,7 +128,7 @@ class EvaluationManager:
             )
             classifiers = EvaluationManager.DEFAULT_CLASSIFIERS
 
-        result = pd.DataFrame(
+        individual_result = pd.DataFrame(
             columns=EvaluationManager.INDIVIDUAL_RESULT_COLUMNS, index=None
         )
 
@@ -128,17 +145,95 @@ class EvaluationManager:
                     tc=tc,
                     sub_tc=sub_tc,
                 )
-                result = result.append(other=classifier_result, ignore_index=True)
+                individual_result = individual_result.append(
+                    other=classifier_result, ignore_index=True
+                )
 
         logger.info(f"Making results directory: {result_directory}")
         result_directory_path.mkdir()
 
-        result.to_csv(
+        # write individual results to disk
+        individual_result.to_csv(
             path_or_buf=result_directory_path.joinpath("individual_results.csv"),
             index=False,
             header=True,
             encoding="utf-8",
         )
+
+        # write test case collection aggregation to disk
+        tcc_aggregate_frame = EvaluationManager.calculate_tcc_aggregate_frame(
+            individual_result=individual_result
+        )
+        tcc_aggregate_frame.to_csv(
+            path_or_buf=result_directory_path.joinpath("tc_collection_results.csv"),
+            index=False,
+            header=True,
+            encoding="utf-8",
+        )
+        logger.info(f"Done writing the results. Check folder {result_directory_path}")
+
+    @staticmethod
+    def calculate_tcc_aggregate_frame(individual_result: pd.DataFrame) -> pd.DataFrame:
+        """Given the individual_result data frame, this method creates an aggregated frame based on
+        test case collection, group size, and classifier.
+
+        Parameters
+        ----------
+        individual_result : pd.DataFrame
+            The dataframe on which the aggregation is based on.
+
+        Returns
+        -------
+            Aggregated dataframe.
+        """
+        tcc_agg_result = pd.DataFrame(
+            columns=EvaluationManager.TCC_RESULT_COLUMNS, index=None
+        )
+        unique_tcc = individual_result["TC Collection"].unique()
+        for tc_collection in unique_tcc:
+            logger.debug(f"Working on {tc_collection}...")
+            tc_collection_frame = individual_result.loc[
+                individual_result["TC Collection"] == tc_collection
+            ]
+
+            for size_group in tc_collection_frame["TC Size Group"].unique():
+                logger.debug(f"... for size {size_group}")
+                tcc_size_frame = tc_collection_frame.loc[
+                    tc_collection_frame["TC Size Group"] == size_group
+                ]
+
+                for classifier in tcc_size_frame["Classifier"].unique():
+                    logger.debug(f"... for classifier {classifier}")
+                    tcc_size_classifier_frame = tcc_size_frame.loc[
+                        tcc_size_frame["Classifier"] == classifier
+                    ]
+                    acc_mean = tcc_size_classifier_frame["Accuracy"].mean()
+                    missing_url_mean = tcc_size_classifier_frame[
+                        "# missing URLs"
+                    ].mean()
+
+                    result_row = pd.Series(
+                        [
+                            # "TC Collection"
+                            tc_collection,
+                            # "Size Group"
+                            size_group,
+                            # "Classifier"
+                            classifier,
+                            # "AVG Accuracy"
+                            acc_mean,
+                            # "AVG # missing URLs"
+                            missing_url_mean,
+                        ],
+                        index=tcc_agg_result.columns,
+                    )
+                    r, _ = tcc_agg_result.shape
+                    tcc_agg_result = tcc_agg_result.append(
+                        result_row, ignore_index=True
+                    )
+        r, _ = tcc_agg_result.shape
+        logger.debug(f"Number of rows of tcc_aggregate_frame {r}")
+        return tcc_agg_result
 
     def evaluate_vector_map(
         self,
