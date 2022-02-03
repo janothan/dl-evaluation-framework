@@ -1,4 +1,5 @@
 import logging.config
+from dataclasses import dataclass
 from pathlib import Path
 from dl_evaluation_framework.classification_evaluator import (
     ClassificationEvaluator,
@@ -17,6 +18,21 @@ import pandas as pd
 logconf_file = Path.joinpath(Path(__file__).parent.resolve(), "log.conf")
 logging.config.fileConfig(fname=logconf_file, disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class VectorTuple:
+    vector_name: str
+    vector_path: str
+
+
+@dataclass(frozen=True)
+class ResultMissingTuple:
+    result: pd.DataFrame
+    """Dataframe has columns: EvaluationManager.INDIVIDUAL_RESULT_COLUMNS
+    """
+
+    missing: Set[str]
 
 
 class EvaluationManager:
@@ -42,36 +58,48 @@ class EvaluationManager:
         SvmClassificationEvaluator(),
     ]
 
+    MISSING_COLUMNS: List[str] = [
+        "Missing URL",
+        "Vector Name",
+        "Vector Path",
+    ]
+
     INDIVIDUAL_RESULT_COLUMNS: List[str] = [
         "TC Collection",
         "TC Group",
         "TC Size Group",
         "TC Actual Size",
+        "Vector Name",
         "Classifier",
         "Accuracy",
         "# missing URLs",
+        "Vector Path",
     ]
 
     TCC_RESULT_COLUMNS: List[str] = [
         "TC Collection",
         "Size Group",
+        "Vector Name",
         "Classifier",
         "AVG Accuracy",
         "AVG # missing URLs",
+        "Vector Path",
     ]
 
     TCG_RESULT_COLUMNS: List[str] = [
         "TC Group",
         "TC Size Group",
         "AVG TC Actual Size",
+        "Vector Name",
         "Classifier",
         "Accuracy",
         "AVG # missing URLs",
+        "Vector Path",
     ]
 
     def evaluate(
         self,
-        vector_files: List[str],
+        vector_names_and_files: List[VectorTuple],
         result_directory: str = DEFAULT_RESULTS_DIRECTORY,
         classifiers: List[ClassificationEvaluator] = None,
         tc_collection: Set[str] = None,
@@ -82,8 +110,8 @@ class EvaluationManager:
 
         Parameters
         ----------
-        vector_files : str
-            The vector txt file. Must be utf-8 encoded.
+        vector_names_and_files : VectorTuple
+            The vector txt file (must be utf-8 or latin-1 encoded) and vector name.
         result_directory : str
             Optional. The result directory. The directory must not exist (otherwise, the method will not be executed).
         classifiers : List[ClassificationEvaluator]
@@ -111,7 +139,7 @@ class EvaluationManager:
             )
             return
 
-        # check whether test directory existence
+        # check whether test directory exists
         test_directory_path = Path(self.test_directory)
         if not test_directory_path.exists():
             logger.error(
@@ -138,22 +166,46 @@ class EvaluationManager:
             columns=EvaluationManager.INDIVIDUAL_RESULT_COLUMNS, index=None
         )
 
+        missing_urls = pd.DataFrame(
+            columns=EvaluationManager.MISSING_COLUMNS, index=None
+        )
+
         # loop over all vector files:
-        for vector_file in vector_files:
-            vector_map = self.read_vector_txt_file(vector_file=vector_file)
+        for vector_tuple in vector_names_and_files:
+            vector_map = self.read_vector_txt_file(vector_file=vector_tuple.vector_path)
+
+            missing_set: Set[str] = set()
 
             # loop over all classifiers
             for classifier in classifiers:
                 classifier_result = self.evaluate_vector_map(
                     vector_map=vector_map,
+                    vector_tuple=vector_tuple,
                     classifier=classifier,
                     tc_collection=tc_collection,
                     tc=tc,
                     sub_tc=sub_tc,
                 )
                 individual_result = individual_result.append(
-                    other=classifier_result, ignore_index=True
+                    other=classifier_result.result, ignore_index=True
                 )
+                missing_set.update(classifier_result.missing)
+
+            # persisting missing urls per vector set:
+            for missing_url in missing_set:
+                missing_row: pd.Series = pd.Series(
+                    [
+                        # "Missing URL"
+                        missing_url,
+                        # "Vector Name"
+                        vector_tuple.vector_name,
+                        # "Vector Path"
+                        vector_tuple.vector_path,
+                    ],
+                    index=missing_urls.columns,
+                )
+
+                missing_urls = missing_urls.append(missing_row, ignore_index=True)
 
         logger.info(f"Making results directory: {result_directory}")
         result_directory_path.mkdir()
@@ -161,6 +213,14 @@ class EvaluationManager:
         # write individual results to disk
         individual_result.to_csv(
             path_or_buf=result_directory_path.joinpath("individual_results.csv"),
+            index=False,
+            header=True,
+            encoding="utf-8",
+        )
+
+        # write missing urls to disk
+        missing_urls.to_csv(
+            path_or_buf=result_directory_path.joinpath("missing_urls.csv"),
             index=False,
             header=True,
             encoding="utf-8",
@@ -208,35 +268,50 @@ class EvaluationManager:
                         tcg_size_frame["Classifier"] == classifier
                     ]
 
-                    mean_tc_act_size = tcg_size_classifier_frame[
-                        "TC Actual Size"
-                    ].mean()
-                    mean_acc = tcg_size_classifier_frame["Accuracy"].mean()
-                    mean_missing_urls = tcg_size_classifier_frame[
-                        "# missing URLs"
-                    ].mean()
+                    for vector_name in tcg_size_classifier_frame[
+                        "Vector Name"
+                    ].unique():
+                        tcg_size_classifier_vname_frame = tcg_size_frame.loc[
+                            tcg_size_frame["Vector Name"] == vector_name
+                        ]
 
-                    result_row = pd.Series(
-                        [
-                            # "TC Group"
-                            tcg,
-                            # "TC Size Group"
-                            size_group,
-                            # "AVG TC Actual Size"
-                            mean_tc_act_size,
-                            # "Classifier"
-                            classifier,
-                            # "Accuracy"
-                            mean_acc,
-                            # "AVG # missing URLs"
-                            mean_missing_urls,
-                        ],
-                        index=tcg_agg_result.columns,
-                    )
+                        mean_tc_act_size = tcg_size_classifier_vname_frame[
+                            "TC Actual Size"
+                        ].mean()
+                        mean_acc = tcg_size_classifier_vname_frame["Accuracy"].mean()
+                        mean_missing_urls = tcg_size_classifier_vname_frame[
+                            "# missing URLs"
+                        ].mean()
 
-                    tcg_agg_result = tcg_agg_result.append(
-                        result_row, ignore_index=True
-                    )
+                        vector_file_path = tcg_size_classifier_vname_frame.iloc[0][
+                            "Vector Path"
+                        ]
+
+                        result_row = pd.Series(
+                            [
+                                # "TC Group"
+                                tcg,
+                                # "TC Size Group"
+                                size_group,
+                                # "AVG TC Actual Size"
+                                mean_tc_act_size,
+                                # "Vector Name"
+                                vector_name,
+                                # "Classifier"
+                                classifier,
+                                # "Accuracy"
+                                mean_acc,
+                                # "AVG # missing URLs"
+                                mean_missing_urls,
+                                # "Vector Path"
+                                vector_file_path,
+                            ],
+                            index=tcg_agg_result.columns,
+                        )
+
+                        tcg_agg_result = tcg_agg_result.append(
+                            result_row, ignore_index=True
+                        )
 
         return tcg_agg_result
 
@@ -275,30 +350,47 @@ class EvaluationManager:
                     tcc_size_classifier_frame = tcc_size_frame.loc[
                         tcc_size_frame["Classifier"] == classifier
                     ]
-                    acc_mean = tcc_size_classifier_frame["Accuracy"].mean()
-                    missing_url_mean = tcc_size_classifier_frame[
-                        "# missing URLs"
-                    ].mean()
 
-                    result_row = pd.Series(
-                        [
-                            # "TC Collection"
-                            tc_collection,
-                            # "Size Group"
-                            size_group,
-                            # "Classifier"
-                            classifier,
-                            # "AVG Accuracy"
-                            acc_mean,
-                            # "AVG # missing URLs"
-                            missing_url_mean,
-                        ],
-                        index=tcc_agg_result.columns,
-                    )
-                    r, _ = tcc_agg_result.shape
-                    tcc_agg_result = tcc_agg_result.append(
-                        result_row, ignore_index=True
-                    )
+                    for vector_name in tcc_size_classifier_frame[
+                        "Vector Name"
+                    ].unique():
+                        logger.debug(f"... for vector name {vector_name}")
+                        tcc_size_classifier_vname_frame = tcc_size_classifier_frame[
+                            tcc_size_classifier_frame["Vector Name"] == vector_name
+                        ]
+
+                        acc_mean = tcc_size_classifier_vname_frame["Accuracy"].mean()
+                        missing_url_mean = tcc_size_classifier_vname_frame[
+                            "# missing URLs"
+                        ].mean()
+
+                        vector_file_path = tcc_size_classifier_vname_frame.iloc[0][
+                            "Vector Path"
+                        ]
+
+                        result_row = pd.Series(
+                            [
+                                # "TC Collection"
+                                tc_collection,
+                                # "Size Group"
+                                size_group,
+                                # "Vector Name"
+                                vector_name,
+                                # "Classifier"
+                                classifier,
+                                # "AVG Accuracy"
+                                acc_mean,
+                                # "AVG # missing URLs"
+                                missing_url_mean,
+                                # "Vector Path"
+                                vector_file_path,
+                            ],
+                            index=tcc_agg_result.columns,
+                        )
+                        r, _ = tcc_agg_result.shape
+                        tcc_agg_result = tcc_agg_result.append(
+                            result_row, ignore_index=True
+                        )
         r, _ = tcc_agg_result.shape
         logger.debug(f"Number of rows of tcc_aggregate_frame {r}")
         return tcc_agg_result
@@ -306,17 +398,20 @@ class EvaluationManager:
     def evaluate_vector_map(
         self,
         vector_map: Dict[str, np.ndarray],
+        vector_tuple: VectorTuple,
         classifier: ClassificationEvaluator,
         tc_collection: Set[str] = None,
         tc: Set[str] = None,
         sub_tc: Set[str] = None,
-    ) -> pd.DataFrame:
+    ) -> ResultMissingTuple:
         """Evaluate a single vector map.
 
         Parameters
         ----------
         vector_map : Dict[str, np.ndarray]
             Vectors (more precisely: a set of vectors) to be evaluated.
+        vector_tuple : VectorTuple
+            Meta information about the vector map.
         classifier : ClassificationEvaluator
             The classifier to be used on the set of vectors.
         tc_collection : Set[str]
@@ -329,11 +424,19 @@ class EvaluationManager:
 
         Returns
         -------
-            A dataframe containing the result statistics.
+            ResultMissingTuple containing:
+            - A dataframe containing the result statistics.
+            - A dataframe containing the missing URLs.
         """
 
-        result = pd.DataFrame(
+        result: pd.DataFrame = pd.DataFrame(
             columns=EvaluationManager.INDIVIDUAL_RESULT_COLUMNS, index=None
+        )
+
+        missing_set: Set[str] = set()
+
+        missing_df: pd.DataFrame = pd.DataFrame(
+            columns=EvaluationManager.MISSING_COLUMNS, index=None
         )
 
         # jump into every test case
@@ -368,6 +471,9 @@ class EvaluationManager:
                     eval_result = classifier.evaluate(
                         data_directory=train_test_path, vectors=vector_map
                     )
+
+                    missing_set.update(eval_result.missed)
+
                     result_row = pd.Series(
                         [
                             # TC Collection:
@@ -378,17 +484,22 @@ class EvaluationManager:
                             sub_tc_dir.name,
                             # TC Actual Size:
                             eval_result.gs_size,
+                            # "Vector Name"
+                            vector_tuple.vector_name,
                             # Classifier
                             eval_result.classifier_name,
                             # Accuracy
                             eval_result.accuracy,
                             # # missing URLs
                             eval_result.number_missed,
+                            # "Vector Path"
+                            vector_tuple.vector_path,
                         ],
                         index=result.columns,
                     )
                     result = result.append(result_row, ignore_index=True)
-        return result
+
+        return ResultMissingTuple(result=result, missing=missing_set)
 
     def write_uris_of_interest_to_file(self, file_to_write: str) -> None:
         """Write relevant URIs to an UTF-8 encoded file (one URI per line).

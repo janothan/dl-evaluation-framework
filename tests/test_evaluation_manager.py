@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from dl_evaluation_framework.evaluation_manager import EvaluationManager
+from dl_evaluation_framework.evaluation_manager import EvaluationManager, VectorTuple
 import shutil
 
 TEST_RESULTS_DIR_STR = "./test_results"
@@ -16,12 +16,16 @@ def test_results_dir_exists():
     if not rdir.exists():
         rdir.mkdir()
     evaluator = EvaluationManager(test_directory="")
-    evaluator.evaluate(vector_files=[], result_directory=RESULTS_DIR_EXISTS_STR)
+    evaluator.evaluate(
+        vector_names_and_files=[], result_directory=RESULTS_DIR_EXISTS_STR
+    )
 
 
 def test_query_dir_does_not_exist():
     evaluator = EvaluationManager(test_directory="DOES-NOT-EXIST")
-    evaluator.evaluate(vector_files=[], result_directory="does-not-exist-either")
+    evaluator.evaluate(
+        vector_names_and_files=[], result_directory="does-not-exist-either"
+    )
 
 
 def test_read_vector_txt_file():
@@ -89,7 +93,16 @@ def test_reduce_vectors():
 def test_evaluate():
     em = EvaluationManager(test_directory="./tests/result_for_testing")
     em.evaluate(
-        vector_files=["./tests/classic_sg.txt"],
+        vector_names_and_files=[
+            VectorTuple(
+                vector_path="./tests/test_files/classic_sg.txt",
+                vector_name="SG 200 Classic",
+            ),
+            VectorTuple(
+                vector_path="./tests/test_files/classic_sg_oa.txt",
+                vector_name="OA SG 200 Classic",
+            ),
+        ],
         result_directory=TEST_RESULTS_DIR_STR,
     )
 
@@ -131,6 +144,6 @@ def teardown_module(module):
     if reduced_file_path.exists():
         reduced_file_path.unlink()
 
-    # test_results_dir_path = Path(TEST_RESULTS_DIR_STR)
-    # if test_results_dir_path.exists():
-    #    shutil.rmtree(test_results_dir_path)
+    test_results_dir_path = Path(TEST_RESULTS_DIR_STR)
+    if test_results_dir_path.exists():
+        shutil.rmtree(test_results_dir_path)
