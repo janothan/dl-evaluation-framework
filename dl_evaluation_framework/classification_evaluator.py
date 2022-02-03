@@ -3,10 +3,14 @@ from pathlib import Path
 from typing import Dict, Union, List, Set
 import numpy as np
 from pandas.errors import EmptyDataError
-from sklearn import tree
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import LinearSVC
 import logging.config
 import pandas as pd
 from dataclasses import dataclass
+
 
 logconf_file = Path.joinpath(Path(__file__).parent.resolve(), "log.conf")
 logging.config.fileConfig(fname=logconf_file, disable_existing_loggers=False)
@@ -123,21 +127,17 @@ class ClassificationEvaluator(ABC):
 
         return FeatureLabelTuple(features=features, labels=labels, missed=missed)
 
-
-class DecisionTreeClassificationEvaluator(ClassificationEvaluator):
-    def __init__(self):
-        self.classifier_name: str = "Decision_Tree"
-
-    def evaluate(
+    def evaluate_with_classifier(
         self,
         data_directory: Union[str, Path],
         vectors: Dict[str, np.ndarray],
-    ) -> EvaluationResult:
-
+        classifier,
+        classifier_name: str,
+    ):
         if type(data_directory) == str:
             data_directory = Path(data_directory)
 
-        train_test: TrainTestTuple = super().parse_train_test(
+        train_test: TrainTestTuple = self.parse_train_test(
             data_directory=data_directory
         )
 
@@ -145,10 +145,10 @@ class DecisionTreeClassificationEvaluator(ClassificationEvaluator):
         gs_size: int = len(train_test.train.index) + len(train_test.test.index)
 
         # train
-        features_labels_train = super().prepare_for_ml(
+        features_labels_train = self.prepare_for_ml(
             vectors=vectors, label_df=train_test.train
         )
-        classifier = tree.DecisionTreeClassifier()
+
         try:
             classifier.fit(
                 X=features_labels_train.features, y=features_labels_train.labels
@@ -158,7 +158,7 @@ class DecisionTreeClassificationEvaluator(ClassificationEvaluator):
         missed.update(features_labels_train.missed)
 
         # test
-        features_labels_test = super().prepare_for_ml(
+        features_labels_test = self.prepare_for_ml(
             vectors=vectors, label_df=train_test.test
         )
         accuracy = classifier.score(
@@ -169,7 +169,79 @@ class DecisionTreeClassificationEvaluator(ClassificationEvaluator):
         return EvaluationResult(
             accuracy=accuracy,
             missed=missed,
-            classifier_name=self.classifier_name,
+            classifier_name=classifier_name,
             data_directory=str(data_directory.resolve()),
             gs_size=gs_size,
+        )
+
+
+class DecisionTreeClassificationEvaluator(ClassificationEvaluator):
+    def __init__(self):
+        self.classifier_name: str = "Decision_Tree"
+
+    def evaluate(
+        self,
+        data_directory: Union[str, Path],
+        vectors: Dict[str, np.ndarray],
+    ) -> EvaluationResult:
+        classifier = DecisionTreeClassifier()
+        return super().evaluate_with_classifier(
+            data_directory=data_directory,
+            vectors=vectors,
+            classifier=classifier,
+            classifier_name=self.classifier_name,
+        )
+
+
+class NaiveBayesClassificationEvaluator(ClassificationEvaluator):
+    def __init__(self):
+        self.classifier_name: str = "Naive_Bayes"
+
+    def evaluate(
+        self,
+        data_directory: Union[str, Path],
+        vectors: Dict[str, np.ndarray],
+    ) -> EvaluationResult:
+        classifier = GaussianNB()
+        return super().evaluate_with_classifier(
+            data_directory=data_directory,
+            vectors=vectors,
+            classifier=classifier,
+            classifier_name=self.classifier_name,
+        )
+
+
+class KnnClassificationEvaluator(ClassificationEvaluator):
+    def __init__(self):
+        self.classifier_name: str = "KNN"
+
+    def evaluate(
+        self,
+        data_directory: Union[str, Path],
+        vectors: Dict[str, np.ndarray],
+    ) -> EvaluationResult:
+        classifier = KNeighborsClassifier()
+        return super().evaluate_with_classifier(
+            data_directory=data_directory,
+            vectors=vectors,
+            classifier=classifier,
+            classifier_name=self.classifier_name,
+        )
+
+
+class SvmClassificationEvaluator(ClassificationEvaluator):
+    def __init__(self):
+        self.classifier_name: str = "SVM"
+
+    def evaluate(
+        self,
+        data_directory: Union[str, Path],
+        vectors: Dict[str, np.ndarray],
+    ) -> EvaluationResult:
+        classifier = LinearSVC()
+        return super().evaluate_with_classifier(
+            data_directory=data_directory,
+            vectors=vectors,
+            classifier=classifier,
+            classifier_name=self.classifier_name,
         )

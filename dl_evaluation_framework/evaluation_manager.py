@@ -3,6 +3,9 @@ from pathlib import Path
 from dl_evaluation_framework.classification_evaluator import (
     ClassificationEvaluator,
     DecisionTreeClassificationEvaluator,
+    NaiveBayesClassificationEvaluator,
+    KnnClassificationEvaluator,
+    SvmClassificationEvaluator,
 )
 
 # some logging configuration
@@ -33,7 +36,10 @@ class EvaluationManager:
     """The default results directory."""
 
     DEFAULT_CLASSIFIERS: List[ClassificationEvaluator] = [
-        DecisionTreeClassificationEvaluator()
+        DecisionTreeClassificationEvaluator(),
+        NaiveBayesClassificationEvaluator(),
+        KnnClassificationEvaluator(),
+        SvmClassificationEvaluator(),
     ]
 
     INDIVIDUAL_RESULT_COLUMNS: List[str] = [
