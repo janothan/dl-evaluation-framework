@@ -190,6 +190,8 @@ class EvaluationManager:
                     tc=tc,
                     sub_tc=sub_tc,
                 )
+                if classifier_result is None:
+                    continue
                 individual_result = individual_result.append(
                     other=classifier_result.result, ignore_index=True
                 )
@@ -407,7 +409,7 @@ class EvaluationManager:
         tc_collection: Set[str] = None,
         tc: Set[str] = None,
         sub_tc: Set[str] = None,
-    ) -> ResultMissingTuple:
+    ) -> Union[ResultMissingTuple, None]:
         """Evaluate a single vector map.
 
         Parameters
@@ -475,6 +477,8 @@ class EvaluationManager:
                     eval_result = classifier.evaluate(
                         data_directory=train_test_path, vectors=vector_map
                     )
+                    if eval_result is None:
+                        return None
 
                     missing_set.update(eval_result.missed)
 

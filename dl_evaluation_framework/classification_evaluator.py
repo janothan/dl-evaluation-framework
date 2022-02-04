@@ -135,7 +135,7 @@ class ClassificationEvaluator(ABC):
         vectors: Dict[str, np.ndarray],
         classifier,
         classifier_name: str,
-    ):
+    ) -> Union[None, EvaluationResult]:
         if type(data_directory) == str:
             data_directory = Path(data_directory)
 
@@ -144,7 +144,20 @@ class ClassificationEvaluator(ABC):
         )
 
         missed: Set[str] = set()
-        gs_size: int = len(train_test.train.index) + len(train_test.test.index)
+
+        if train_test.train is None:
+            train_size = 0
+        else:
+            train_size = len(train_test.train.index)
+
+        if train_test.test is None:
+            test_size = 0
+        else:
+            test_size = len(train_test.test.index)
+        gs_size: int = train_size + test_size
+
+        if gs_size == 0:
+            return None
 
         # train
         features_labels_train = self.prepare_for_ml(
