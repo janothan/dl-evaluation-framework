@@ -7,6 +7,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
 import logging.config
 import pandas as pd
 from dataclasses import dataclass
@@ -239,6 +241,42 @@ class SvmClassificationEvaluator(ClassificationEvaluator):
         vectors: Dict[str, np.ndarray],
     ) -> EvaluationResult:
         classifier = LinearSVC()
+        return super().evaluate_with_classifier(
+            data_directory=data_directory,
+            vectors=vectors,
+            classifier=classifier,
+            classifier_name=self.classifier_name,
+        )
+
+
+class RandomForrestClassificationEvaluator(ClassificationEvaluator):
+    def __init__(self):
+        self.classifier_name: str = "Random_Forrest"
+
+    def evaluate(
+        self,
+        data_directory: Union[str, Path],
+        vectors: Dict[str, np.ndarray],
+    ) -> EvaluationResult:
+        classifier = RandomForestClassifier()
+        return super().evaluate_with_classifier(
+            data_directory=data_directory,
+            vectors=vectors,
+            classifier=classifier,
+            classifier_name=self.classifier_name,
+        )
+
+
+class MlpClassificationEvaluator(ClassificationEvaluator):
+    def __init__(self):
+        self.classifier_name: str = "Multi_Layer_Perceptron"
+
+    def evaluate(
+        self,
+        data_directory: Union[str, Path],
+        vectors: Dict[str, np.ndarray],
+    ) -> EvaluationResult:
+        classifier = MLPClassifier()
         return super().evaluate_with_classifier(
             data_directory=data_directory,
             vectors=vectors,

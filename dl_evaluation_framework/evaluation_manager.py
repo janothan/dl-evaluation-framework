@@ -7,6 +7,8 @@ from dl_evaluation_framework.classification_evaluator import (
     NaiveBayesClassificationEvaluator,
     KnnClassificationEvaluator,
     SvmClassificationEvaluator,
+    RandomForrestClassificationEvaluator,
+    MlpClassificationEvaluator,
 )
 
 # some logging configuration
@@ -56,6 +58,8 @@ class EvaluationManager:
         NaiveBayesClassificationEvaluator(),
         KnnClassificationEvaluator(),
         SvmClassificationEvaluator(),
+        RandomForrestClassificationEvaluator(),
+        MlpClassificationEvaluator(),
     ]
 
     MISSING_COLUMNS: List[str] = [

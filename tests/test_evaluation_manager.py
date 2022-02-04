@@ -130,6 +130,13 @@ def test_evaluate():
     assert rows > 0
     assert cols > 0
 
+    missing_results_path = Path(TEST_RESULTS_DIR_STR).joinpath("missing_urls.csv")
+    assert missing_results_path.exists()
+    missing_df = pd.read_csv(filepath_or_buffer=missing_results_path)
+    rows_cols = missing_df.shape
+    assert rows > 0
+    assert cols > 0
+
 
 def teardown_module(module):
     dir1 = Path(RESULTS_DIR_EXISTS_STR)
