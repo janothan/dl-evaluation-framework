@@ -191,6 +191,9 @@ class EvaluationManager:
                     sub_tc=sub_tc,
                 )
                 if classifier_result is None:
+                    logger.warning(
+                        f"No classifier result for {vector_tuple.vector_name}!"
+                    )
                     continue
                 individual_result = individual_result.append(
                     other=classifier_result.result, ignore_index=True
@@ -435,15 +438,13 @@ class EvaluationManager:
             - A dataframe containing the missing URLs.
         """
 
+        logger.info(f"Evaluating {vector_tuple.vector_name}")
+
         result: pd.DataFrame = pd.DataFrame(
             columns=EvaluationManager.INDIVIDUAL_RESULT_COLUMNS, index=None
         )
 
         missing_set: Set[str] = set()
-
-        missing_df: pd.DataFrame = pd.DataFrame(
-            columns=EvaluationManager.MISSING_COLUMNS, index=None
-        )
 
         # jump into every test case
         for tc_collection_dir in Path.iterdir(Path(self.test_directory)):
@@ -478,7 +479,11 @@ class EvaluationManager:
                         data_directory=train_test_path, vectors=vector_map
                     )
                     if eval_result is None:
-                        return None
+                        logger.warning(
+                            f"Could not determine result for {vector_tuple.vector_name} "
+                            f"on {train_test_path}"
+                        )
+                        continue
 
                     missing_set.update(eval_result.missed)
 
