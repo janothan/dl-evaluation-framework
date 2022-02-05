@@ -190,6 +190,7 @@ class EvaluationManager:
                     tc=tc,
                     sub_tc=sub_tc,
                 )
+
                 if classifier_result is None:
                     logger.warning(
                         f"No classifier result for {vector_tuple.vector_name}!"
@@ -605,9 +606,19 @@ class EvaluationManager:
                             f"Could not find '{train_test_path}'. Continue evaluation."
                         )
                         continue
-                    eval_result = classifier.evaluate(
-                        data_directory=train_test_path, vectors=vector_map
-                    )
+
+                    try:
+                        eval_result = classifier.evaluate(
+                            data_directory=train_test_path, vectors=vector_map
+                        )
+                    except ValueError as error:
+                        logger.error(
+                            f"An error occurred with classifier {classifier} using {vector_tuple.vector_name} "
+                            f"on directory {train_test_path}. Evaluation continues.",
+                            error,
+                        )
+                        continue
+
                     if eval_result is None:
                         logger.warning(
                             f"Could not determine result for {vector_tuple.vector_name} "
