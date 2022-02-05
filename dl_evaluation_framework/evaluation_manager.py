@@ -96,7 +96,7 @@ class EvaluationManager:
         "AVG TC Actual Size",
         "Vector Name",
         "Classifier",
-        "Accuracy",
+        "AVG Accuracy",
         "AVG # missing URLs",
         "Vector Path",
     ]
@@ -248,8 +248,20 @@ class EvaluationManager:
             encoding="utf-8",
         )
 
+        best_tcc_aggregate_frame = EvaluationManager.calculate_best_tcc_aggregate_frame(
+            tcc_aggregate_frame=tcc_aggregate_frame
+        )
+        best_tcc_aggregate_frame.to_csv(
+            path_or_buf=result_directory_path.joinpath(
+                "best_tc_collection_results.csv"
+            ),
+            index=False,
+            header=True,
+            encoding="utf-8",
+        )
+
         # write the test case group aggregation to disk
-        tcg_aggregate_frame = EvaluationManager.calculated_tcg_aggregate_frame(
+        tcg_aggregate_frame = EvaluationManager.calculate_tcg_aggregate_frame(
             individual_result=individual_result
         )
         tcg_aggregate_frame.to_csv(
@@ -259,10 +271,63 @@ class EvaluationManager:
             encoding="utf-8",
         )
 
+        best_tcg_aggregate_frame: pd.DataFrame = (
+            EvaluationManager.calculate_best_tcg_aggregate_frame(
+                tcg_agg_result=tcg_aggregate_frame
+            )
+        )
+        best_tcg_aggregate_frame.to_csv(
+            path_or_buf=result_directory_path.joinpath("best_tc_group_results.csv"),
+            index=False,
+            header=True,
+            encoding="utf-8",
+        )
+
         logger.info(f"Done writing the results. Check folder {result_directory_path}")
 
     @staticmethod
-    def calculated_tcg_aggregate_frame(individual_result: pd.DataFrame) -> pd.DataFrame:
+    def calculate_best_tcg_aggregate_frame(
+        tcg_agg_result: pd.DataFrame,
+    ) -> pd.DataFrame:
+        best_tcg_agg_result = pd.DataFrame(
+            columns=EvaluationManager.TCG_RESULT_COLUMNS, index=None
+        )
+        for tcg in tcg_agg_result["TC Group"].unique():
+            tcg_frame = tcg_agg_result.loc[tcg_agg_result["TC Group"] == tcg]
+
+            for size_group in tcg_frame["TC Size Group"].unique():
+                tcg_size_frame = tcg_frame.loc[tcg_frame["TC Size Group"] == size_group]
+
+                for vname in tcg_size_frame["Vector Name"].unique():
+                    tcg_vname_frame = tcg_size_frame.loc[
+                        tcg_size_frame["Vector Name"] == vname
+                    ]
+
+                    best_acc: float = 0.0
+                    best_row: pd.DataFrame = pd.DataFrame()
+                    for classifier in tcg_vname_frame["Classifier"].unique():
+                        tcg_classifier_frame = tcg_vname_frame.loc[
+                            tcg_vname_frame["Classifier"] == classifier
+                        ]
+
+                        currenct_acc = tcg_classifier_frame.iloc[0]["AVG Accuracy"]
+                        if currenct_acc > best_acc:
+                            best_row: pd.DataFrame = tcg_classifier_frame
+                            best_acc = currenct_acc
+
+                    r, _ = best_row.shape
+                    if r == 0:
+                        logger.warning(
+                            f"No best row found for vector '{vname}' on TCC {tcg}."
+                        )
+                    else:
+                        best_tcg_agg_result = pd.concat(
+                            objs=[best_tcg_agg_result, best_row], ignore_index=True
+                        )
+        return best_tcg_agg_result
+
+    @staticmethod
+    def calculate_tcg_aggregate_frame(individual_result: pd.DataFrame) -> pd.DataFrame:
         tcg_agg_result = pd.DataFrame(
             columns=EvaluationManager.TCG_RESULT_COLUMNS, index=None
         )
@@ -329,6 +394,66 @@ class EvaluationManager:
         return tcg_agg_result
 
     @staticmethod
+    def calculate_best_tcc_aggregate_frame(
+        tcc_aggregate_frame: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """Aggregate according to the best ML algorithm given the already TCC aggregated data frame.
+
+        Parameters
+        ----------
+        tcc_aggregate_frame: pd.DataFrame
+            Should have columns EvaluationManager.TCC_RESULT_COLUMNS.
+
+        Returns
+        -------
+            Aggregated dataframe with columns EvaluationManager.TCC_RESULT_COLUMNS.
+        """
+        best_tcc_agg_result = pd.DataFrame(
+            columns=EvaluationManager.TCC_RESULT_COLUMNS, index=None
+        )
+
+        unique_tcc = tcc_aggregate_frame["TC Collection"].unique()
+        for tc_collection in unique_tcc:
+            logger.debug(f"[best tcc] Working on {tc_collection}...")
+            tc_collection_frame = tcc_aggregate_frame.loc[
+                tcc_aggregate_frame["TC Collection"] == tc_collection
+            ]
+
+            for size_group in tc_collection_frame["Size Group"].unique():
+                logger.debug(f"[best tcc] ... for size {size_group}")
+                tcc_size_frame = tc_collection_frame.loc[
+                    tc_collection_frame["Size Group"] == size_group
+                ]
+                for vname in tcc_size_frame["Vector Name"].unique():
+                    logger.debug(f"[best tcc] ... for vector name {vname}")
+                    tcc_vname = tcc_size_frame.loc[
+                        tcc_size_frame["Vector Name"] == vname
+                    ]
+
+                    best_row: pd.DataFrame = pd.DataFrame()
+                    best_acc: float = 0
+
+                    for vclassifier in tcc_vname["Classifier"].unique():
+                        tcc_vclassifier = tcc_vname.loc[
+                            tcc_vname["Classifier"] == vclassifier
+                        ]
+                        currenct_acc = tcc_vclassifier.iloc[0]["AVG Accuracy"]
+                        if currenct_acc > best_acc:
+                            best_row: pd.DataFrame = tcc_vclassifier
+                            best_acc = currenct_acc
+
+                    r, _ = best_row.shape
+                    if r == 0:
+                        logger.warning(
+                            f"No best row found for vector '{vname}' on TCC {tc_collection}."
+                        )
+                    else:
+                        best_tcc_agg_result = pd.concat(
+                            objs=[best_tcc_agg_result, best_row], ignore_index=True
+                        )
+        return best_tcc_agg_result
+
+    @staticmethod
     def calculate_tcc_aggregate_frame(individual_result: pd.DataFrame) -> pd.DataFrame:
         """Given the individual_result data frame, this method creates an aggregated frame based on
         test case collection, group size, and classifier.
@@ -340,7 +465,7 @@ class EvaluationManager:
 
         Returns
         -------
-            Aggregated dataframe.
+            Aggregated dataframe with columns EvaluationManager.TCC_RESULT_COLUMNS.
         """
         tcc_agg_result = pd.DataFrame(
             columns=EvaluationManager.TCC_RESULT_COLUMNS, index=None
