@@ -133,7 +133,25 @@ def test_evaluate():
     missing_results_path = Path(TEST_RESULTS_DIR_STR).joinpath("missing_urls.csv")
     assert missing_results_path.exists()
     missing_df = pd.read_csv(filepath_or_buffer=missing_results_path)
-    rows_cols = missing_df.shape
+    rows, cols = missing_df.shape
+    assert rows > 0
+    assert cols > 0
+
+    best_tcc_results_path = Path(TEST_RESULTS_DIR_STR).joinpath(
+        "best_tc_collection_results.csv"
+    )
+    assert best_tcc_results_path.exists()
+    best_tcc_df = pd.read_csv(filepath_or_buffer=best_tcc_results_path)
+    rows, cols = best_tcc_df.shape
+    assert rows > 0
+    assert cols > 0
+
+    best_tcg_results_path = Path(TEST_RESULTS_DIR_STR).joinpath(
+        "best_tc_group_results.csv"
+    )
+    assert best_tcg_results_path.exists()
+    best_tcg_df = pd.read_csv(filepath_or_buffer=best_tcg_results_path)
+    rows, cols = best_tcg_df.shape
     assert rows > 0
     assert cols > 0
 
