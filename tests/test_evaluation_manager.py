@@ -151,6 +151,6 @@ def teardown_module(module):
     if reduced_file_path.exists():
         reduced_file_path.unlink()
 
-    # test_results_dir_path = Path(TEST_RESULTS_DIR_STR)
-    # if test_results_dir_path.exists():
-    #    shutil.rmtree(test_results_dir_path)
+    test_results_dir_path = Path(TEST_RESULTS_DIR_STR)
+    if test_results_dir_path.exists():
+        shutil.rmtree(test_results_dir_path)

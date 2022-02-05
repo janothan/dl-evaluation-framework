@@ -12,7 +12,7 @@ setup(
     package_data={"dl_evaluation_framework": ["log.conf"]},
     install_requires=[
         "scikit-learn>=1.0.2",
-        "pandas>=1.3.5",
+        "pandas>=1.4.0",
         "numpy>=1.21.2",
     ],
 )

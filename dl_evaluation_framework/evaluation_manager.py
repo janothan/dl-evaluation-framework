@@ -195,26 +195,28 @@ class EvaluationManager:
                         f"No classifier result for {vector_tuple.vector_name}!"
                     )
                     continue
-                individual_result = individual_result.append(
-                    other=classifier_result.result, ignore_index=True
+                individual_result = pd.concat(
+                    objs=[individual_result, classifier_result.result],
+                    ignore_index=True,
                 )
                 missing_set.update(classifier_result.missing)
 
             # persisting missing urls per vector set:
             for missing_url in missing_set:
-                missing_row: pd.Series = pd.Series(
-                    [
-                        # "Missing URL"
-                        missing_url,
-                        # "Vector Name"
-                        vector_tuple.vector_name,
-                        # "Vector Path"
-                        vector_tuple.vector_path,
+                missing_row: pd.DataFrame = pd.DataFrame(
+                    data=[
+                        (
+                            # "Missing URL"
+                            missing_url,
+                            # "Vector Name"
+                            vector_tuple.vector_name,
+                            # "Vector Path"
+                            vector_tuple.vector_path,
+                        )
                     ],
-                    index=missing_urls.columns,
+                    columns=missing_urls.columns,
                 )
-
-                missing_urls = missing_urls.append(missing_row, ignore_index=True)
+                missing_urls = pd.concat([missing_urls, missing_row], ignore_index=True)
 
         logger.info(f"Making results directory: {result_directory}")
         result_directory_path.mkdir()
@@ -296,30 +298,32 @@ class EvaluationManager:
                             "Vector Path"
                         ]
 
-                        result_row = pd.Series(
-                            [
-                                # "TC Group"
-                                tcg,
-                                # "TC Size Group"
-                                size_group,
-                                # "AVG TC Actual Size"
-                                mean_tc_act_size,
-                                # "Vector Name"
-                                vector_name,
-                                # "Classifier"
-                                classifier,
-                                # "Accuracy"
-                                mean_acc,
-                                # "AVG # missing URLs"
-                                mean_missing_urls,
-                                # "Vector Path"
-                                vector_file_path,
+                        result_row = pd.DataFrame(
+                            data=[
+                                (
+                                    # "TC Group"
+                                    tcg,
+                                    # "TC Size Group"
+                                    size_group,
+                                    # "AVG TC Actual Size"
+                                    mean_tc_act_size,
+                                    # "Vector Name"
+                                    vector_name,
+                                    # "Classifier"
+                                    classifier,
+                                    # "Accuracy"
+                                    mean_acc,
+                                    # "AVG # missing URLs"
+                                    mean_missing_urls,
+                                    # "Vector Path"
+                                    vector_file_path,
+                                )
                             ],
-                            index=tcg_agg_result.columns,
+                            columns=tcg_agg_result.columns,
                         )
 
-                        tcg_agg_result = tcg_agg_result.append(
-                            result_row, ignore_index=True
+                        tcg_agg_result = pd.concat(
+                            [result_row, tcg_agg_result], ignore_index=True
                         )
 
         return tcg_agg_result
@@ -377,28 +381,29 @@ class EvaluationManager:
                             "Vector Path"
                         ]
 
-                        result_row = pd.Series(
+                        result_row = pd.DataFrame(
                             [
-                                # "TC Collection"
-                                tc_collection,
-                                # "Size Group"
-                                size_group,
-                                # "Vector Name"
-                                vector_name,
-                                # "Classifier"
-                                classifier,
-                                # "AVG Accuracy"
-                                acc_mean,
-                                # "AVG # missing URLs"
-                                missing_url_mean,
-                                # "Vector Path"
-                                vector_file_path,
+                                (
+                                    # "TC Collection"
+                                    tc_collection,
+                                    # "Size Group"
+                                    size_group,
+                                    # "Vector Name"
+                                    vector_name,
+                                    # "Classifier"
+                                    classifier,
+                                    # "AVG Accuracy"
+                                    acc_mean,
+                                    # "AVG # missing URLs"
+                                    missing_url_mean,
+                                    # "Vector Path"
+                                    vector_file_path,
+                                )
                             ],
-                            index=tcc_agg_result.columns,
+                            columns=tcc_agg_result.columns,
                         )
-                        r, _ = tcc_agg_result.shape
-                        tcc_agg_result = tcc_agg_result.append(
-                            result_row, ignore_index=True
+                        tcc_agg_result = pd.concat(
+                            [tcc_agg_result, result_row], ignore_index=True
                         )
         r, _ = tcc_agg_result.shape
         logger.debug(f"Number of rows of tcc_aggregate_frame {r}")
@@ -487,35 +492,37 @@ class EvaluationManager:
 
                     missing_set.update(eval_result.missed)
 
-                    result_row = pd.Series(
-                        [
-                            # TC Collection:
-                            tc_collection_dir.name,
-                            # TC Group:
-                            tc_dir.name,
-                            # TC Size Group:
-                            sub_tc_dir.name,
-                            # TC Actual Size:
-                            eval_result.gs_size,
-                            # "Vector Name"
-                            vector_tuple.vector_name,
-                            # Classifier
-                            eval_result.classifier_name,
-                            # Accuracy
-                            eval_result.accuracy,
-                            # # missing URLs
-                            eval_result.number_missed,
-                            # "Vector Path"
-                            vector_tuple.vector_path,
+                    result_row = pd.DataFrame(
+                        data=[
+                            (
+                                # TC Collection:
+                                tc_collection_dir.name,
+                                # TC Group:
+                                tc_dir.name,
+                                # TC Size Group:
+                                sub_tc_dir.name,
+                                # TC Actual Size:
+                                eval_result.gs_size,
+                                # "Vector Name"
+                                vector_tuple.vector_name,
+                                # Classifier
+                                eval_result.classifier_name,
+                                # Accuracy
+                                eval_result.accuracy,
+                                # # missing URLs
+                                eval_result.number_missed,
+                                # "Vector Path"
+                                vector_tuple.vector_path,
+                            )
                         ],
-                        index=result.columns,
+                        columns=result.columns,
                     )
-                    result = result.append(result_row, ignore_index=True)
+                    result = pd.concat([result, result_row], axis=0, ignore_index=True)
 
         return ResultMissingTuple(result=result, missing=missing_set)
 
     def write_uris_of_interest_to_file(self, file_to_write: str) -> None:
-        """Write relevant URIs to an UTF-8 encoded file (one URI per line).
+        """Write relevant URIs to a UTF-8 encoded file (one URI per line).
 
         Parameters
         ----------
