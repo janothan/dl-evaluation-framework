@@ -157,6 +157,7 @@ class ClassificationEvaluator(ABC):
         gs_size: int = train_size + test_size
 
         if gs_size == 0:
+            logger.error("The size of the gold standard is 0. Return None.")
             return None
 
         # train
@@ -169,7 +170,10 @@ class ClassificationEvaluator(ABC):
                 X=features_labels_train.features, y=features_labels_train.labels
             )
         except Exception as e:
-            logger.error("An error occurred while trying to fit the classifier.", e)
+            logger.error(
+                "An error occurred while trying to fit the classifier. Return None.", e
+            )
+            return None
         missed.update(features_labels_train.missed)
 
         # test
