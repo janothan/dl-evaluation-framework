@@ -164,6 +164,15 @@ def test_evaluate():
     assert rows > 0
     assert cols > 0
 
+    best_tcg_comparison_path = Path(TEST_RESULTS_DIR_STR).joinpath(
+        "comparison_best_tc_group_results.csv"
+    )
+    assert best_tcg_comparison_path.exists()
+    best_tcg_comparison_df = pd.read_csv(filepath_or_buffer=best_tcg_comparison_path)
+    rows, cols = best_tcg_comparison_df.shape
+    assert rows > 0
+    assert cols > 0
+
 
 def teardown_module(module):
     dir1 = Path(RESULTS_DIR_EXISTS_STR)

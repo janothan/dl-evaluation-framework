@@ -299,6 +299,18 @@ class EvaluationManager:
             encoding="utf-8",
         )
 
+        best_tcg_comparison_frame = EvaluationManager.best_tc_group_comparison_results(
+            best_tc_group_results=best_tcg_aggregate_frame, is_highlight_best=True
+        )
+        best_tcg_comparison_frame.to_csv(
+            path_or_buf=result_directory_path.joinpath(
+                "comparison_best_tc_group_results.csv"
+            ),
+            index=False,
+            header=True,
+            encoding="utf-8",
+        )
+
         logger.info(f"Done writing the results. Check folder {result_directory_path}")
 
     @staticmethod
@@ -341,6 +353,55 @@ class EvaluationManager:
                             objs=[best_tcg_agg_result, best_row], ignore_index=True
                         )
         return best_tcg_agg_result
+
+    @staticmethod
+    def best_tc_group_comparison_results(
+        best_tc_group_results: pd.DataFrame, is_highlight_best: bool
+    ) -> pd.DataFrame:
+        result_columns = ["TC Group", "TC Size Group"]
+
+        for vector_name in best_tc_group_results["Vector Name"].unique():
+            result_columns.append(vector_name)
+
+        result_df = pd.DataFrame(columns=result_columns)
+
+        for tc_collection in best_tc_group_results["TC Group"].unique():
+            tcg_frame = best_tc_group_results.loc[
+                best_tc_group_results["TC Group"] == tc_collection
+            ]
+            for size_group in tcg_frame["TC Size Group"].unique():
+                tcc_size_frame = tcg_frame.loc[tcg_frame["TC Size Group"] == size_group]
+
+                result_row_data = [tc_collection, size_group]
+
+                for vector_name in result_columns[2:]:
+                    result_row_data.append(
+                        tcc_size_frame.loc[
+                            tcc_size_frame["Vector Name"] == vector_name
+                        ].iloc[0]["AVG Accuracy"]
+                    )
+                result_row: pd.DataFrame = pd.DataFrame(
+                    data=[result_row_data], columns=result_columns, index=None
+                )
+                result_df = pd.concat(
+                    objs=[result_df, result_row],
+                    ignore_index=True,
+                )
+        if is_highlight_best:
+            for idx, row in result_df.iterrows():
+                best_acc: float = 0.0
+                best_vname: str = ""
+                for vname in result_columns[2:]:
+                    current_acc = result_df.iloc[idx][vname]
+                    if current_acc > best_acc:
+                        best_acc = current_acc
+                        best_vname = vname
+                if best_vname == "":
+                    print("No best value found!")
+                else:
+                    result_df.iloc[idx][best_vname] = f"** {best_acc} **"
+
+        return result_df
 
     @staticmethod
     def calculate_tcg_aggregate_frame(individual_result: pd.DataFrame) -> pd.DataFrame:
