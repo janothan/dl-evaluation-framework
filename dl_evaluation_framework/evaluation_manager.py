@@ -261,6 +261,21 @@ class EvaluationManager:
             encoding="utf-8",
         )
 
+        best_tcc_comparison_frame = (
+            EvaluationManager.best_tc_collection_comparison_results(
+                best_tc_collection_results=best_tcc_aggregate_frame,
+                is_highlight_best=True,
+            )
+        )
+        best_tcc_comparison_frame.to_csv(
+            path_or_buf=result_directory_path.joinpath(
+                "comparison_best_tc_collection_results.csv"
+            ),
+            index=False,
+            header=True,
+            encoding="utf-8",
+        )
+
         # write the test case group aggregation to disk
         tcg_aggregate_frame = EvaluationManager.calculate_tcg_aggregate_frame(
             individual_result=individual_result
@@ -453,6 +468,70 @@ class EvaluationManager:
                             objs=[best_tcc_agg_result, best_row], ignore_index=True
                         )
         return best_tcc_agg_result
+
+    @staticmethod
+    def best_tc_collection_comparison_results(
+        best_tc_collection_results: pd.DataFrame, is_highlight_best: bool
+    ) -> pd.DataFrame:
+        """Calculates a dataframe from the best tcc results so that the best accuracies for each vector name
+        can be directly compared.
+
+        Parameters
+        ----------
+        best_tc_collection_results: pd.DataFrame
+            DataFrame with columns EvaluationManager.TCC_RESULT_COLUMNS obtained by calling
+            calculate_best_tcc_aggregate_frame(...)!
+        is_highlight_best: bool
+            If true the best accuracy in each row is highlighted using stars.
+
+        Returns
+        -------
+            A dataframe that allows to compare the best performance per test case collection.
+        """
+        result_columns = ["TC Collection", "Size Group"]
+
+        for vector_name in best_tc_collection_results["Vector Name"].unique():
+            result_columns.append(vector_name)
+
+        result_df = pd.DataFrame(columns=result_columns)
+
+        for tc_collection in best_tc_collection_results["TC Collection"].unique():
+            tcc_frame = best_tc_collection_results.loc[
+                best_tc_collection_results["TC Collection"] == tc_collection
+            ]
+            for size_group in tcc_frame["Size Group"].unique():
+                tcc_size_frame = tcc_frame.loc[tcc_frame["Size Group"] == size_group]
+
+                result_row_data = [tc_collection, size_group]
+
+                for vector_name in result_columns[2:]:
+                    result_row_data.append(
+                        tcc_size_frame.loc[
+                            tcc_size_frame["Vector Name"] == vector_name
+                        ].iloc[0]["AVG Accuracy"]
+                    )
+                result_row: pd.DataFrame = pd.DataFrame(
+                    data=[result_row_data], columns=result_columns, index=None
+                )
+                result_df = pd.concat(
+                    objs=[result_df, result_row],
+                    ignore_index=True,
+                )
+        if is_highlight_best:
+            for idx, row in result_df.iterrows():
+                best_acc: float = 0.0
+                best_vname: str = ""
+                for vname in result_columns[2:]:
+                    current_acc = result_df.iloc[idx][vname]
+                    if current_acc > best_acc:
+                        best_acc = current_acc
+                        best_vname = vname
+                if best_vname == "":
+                    print("No best value found!")
+                else:
+                    result_df.iloc[idx][best_vname] = f"** {best_acc} **"
+
+        return result_df
 
     @staticmethod
     def calculate_tcc_aggregate_frame(individual_result: pd.DataFrame) -> pd.DataFrame:
