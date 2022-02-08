@@ -4,9 +4,14 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Pre-Commit Enabled](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
 
-This project is tested with Python [3.8, 3.9, 3.10] on macOS and Linux.
+
+A framework to evaluate knowledge graph embeddings on description logics test cases.
+You can generate or download the gold standard using [this project](https://github.com/janothan/DBpediaTestCaseGenerator/).
+
 
 ## Developer Notes
+This project is tested with Python [3.8, 3.9, 3.10] on macOS and Linux.
+
 - Testing framework: [pytest](https://docs.pytest.org/en/6.2.x/)
 - Docstring format: <a href="https://numpy.org/doc/stable/docs/howto_document.html">NumPy/SciPy</a>
 - Code formatting: <a href="https://github.com/psf/black">black</a>
