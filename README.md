@@ -1,4 +1,4 @@
-# ML-Module for DL Gold Standard
+# ML Evaluation Module for DL Gold Standard
 [![Python CI](https://github.com/janothan/dl-evaluation-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/janothan/dl-evaluation-framework/actions/workflows/ci.yml)
 [![Lint](https://github.com/janothan/dl-evaluation-framework/actions/workflows/black.yml/badge.svg)](https://github.com/janothan/dl-evaluation-framework/actions/workflows/black.yml)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
