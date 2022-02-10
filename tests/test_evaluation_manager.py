@@ -174,6 +174,13 @@ def test_evaluate():
     assert cols > 0
 
 
+def test_remove_tags():
+    assert "house" == EvaluationManager.remove_tags("house")
+    assert "house" == EvaluationManager.remove_tags("house>")
+    assert "house" == EvaluationManager.remove_tags("<house>")
+    assert "house" == EvaluationManager.remove_tags("house>")
+
+
 def teardown_module(module):
     dir1 = Path(RESULTS_DIR_EXISTS_STR)
     if dir1.exists():

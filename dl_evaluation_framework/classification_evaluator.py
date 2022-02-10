@@ -13,7 +13,6 @@ import logging.config
 import pandas as pd
 from dataclasses import dataclass
 
-
 logconf_file = Path.joinpath(Path(__file__).parent.resolve(), "log.conf")
 logging.config.fileConfig(fname=logconf_file, disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
@@ -120,7 +119,7 @@ class ClassificationEvaluator(ABC):
         missed: Set[str] = set()
 
         for idx, row in label_df.iterrows():
-            concept = row[0]
+            concept = ClassificationEvaluator.remove_tags(row[0])
             if concept in vectors:
                 features.append(vectors[concept])
                 labels.append(row[1])
@@ -128,6 +127,12 @@ class ClassificationEvaluator(ABC):
                 missed.add(concept)
 
         return FeatureLabelTuple(features=features, labels=labels, missed=missed)
+
+    @staticmethod
+    def remove_tags(input_str: str) -> str:
+        input_str = input_str.lstrip("<")
+        input_str = input_str.rstrip(">")
+        return input_str
 
     def evaluate_with_classifier(
         self,

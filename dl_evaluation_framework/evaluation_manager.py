@@ -726,6 +726,7 @@ class EvaluationManager:
                         f"Skipping '{tc_collection_dir.resolve()}' (not in tc_collection)"
                     )
                     continue
+
             for tc_dir in Path.iterdir(Path(tc_collection_dir)):
                 # example for tc_dir: "person"
                 if tc is not None and tc != "":
@@ -889,10 +890,18 @@ class EvaluationManager:
                 line = line.strip()
                 elements = line.split(" ")
                 if len(elements) > 2:
-                    result[elements[0]] = np.array(elements[1:]).astype(np.float32)
+                    result[cls.remove_tags(elements[0])] = np.array(
+                        elements[1:]
+                    ).astype(np.float32)
                 else:
                     logger.warning("Empty line or line with only 2 elements!")
         return result
+
+    @staticmethod
+    def remove_tags(input_str: str) -> str:
+        input_str = input_str.lstrip("<")
+        input_str = input_str.rstrip(">")
+        return input_str
 
     @classmethod
     def reduce_vectors(
