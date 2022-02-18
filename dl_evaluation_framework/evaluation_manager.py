@@ -238,6 +238,32 @@ class EvaluationManager:
             encoding="utf-8",
         )
 
+        # write aggregate/derived results
+        EvaluationManager.write_aggregate_files(
+            individual_result=individual_result,
+            result_directory_path=result_directory_path,
+        )
+
+        logger.info(f"Done writing the results. Check folder {result_directory_path}")
+
+    @staticmethod
+    def write_aggregate_files(
+        individual_result: pd.DataFrame, result_directory_path: Path
+    ) -> None:
+        """Write derived evaluation files from individual_result.
+
+        Parameters
+        ----------
+        individual_result : pd.DataFrame
+            The dataframe on which the aggregation is based on. The frame has columns defined in
+            INDIVIDUAL_RESULT_COLUMNS.
+        result_directory_path : Path
+
+        Returns
+        -------
+            None
+        """
+
         # write test case collection aggregation to disk
         tcc_aggregate_frame = EvaluationManager.calculate_tcc_aggregate_frame(
             individual_result=individual_result
@@ -310,8 +336,6 @@ class EvaluationManager:
             header=True,
             encoding="utf-8",
         )
-
-        logger.info(f"Done writing the results. Check folder {result_directory_path}")
 
     @staticmethod
     def calculate_best_tcg_aggregate_frame(
