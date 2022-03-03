@@ -9,6 +9,7 @@ TEST_RESULTS_DIR_STR = "./test_results"
 RESULTS_DIR_EXISTS_STR = "./results_dir_exists"
 INTERESTED_NODES_STR = "./uris_of_interest.txt"
 REDUCED_FILE_STR = "./reduced_vectors.txt"
+REDUCED_FILE_STR_2 = "./reduced_vectors_2.txt"
 
 
 def test_results_dir_exists():
@@ -88,6 +89,23 @@ def test_reduce_vectors():
         entities_of_interest="",
     )
     assert Path(invalid_path_str).exists() is False
+
+
+def test_reduce_vectors2():
+    EvaluationManager.reduce_vectors(
+        original_vector_file="./tests/merge_tests/merge_vectors.txt",
+        reduced_vector_file_to_write=REDUCED_FILE_STR_2,
+        entities_of_interest="./tests/merge_tests/concepts_of_interest.txt",
+    )
+    assert Path(REDUCED_FILE_STR_2).exists()
+    blank_lines = 0
+    with open(REDUCED_FILE_STR_2, "r", encoding="utf-8") as rfile:
+        for line in rfile:
+            if line == "\n" or line.strip() == "":
+                blank_lines += 1
+    assert blank_lines <= 1
+    vects = EvaluationManager.read_vector_txt_file(REDUCED_FILE_STR_2)
+    assert len(vects) == 3
 
 
 def test_evaluate():
@@ -193,6 +211,12 @@ def teardown_module(module):
     reduced_file_path = Path(Path(REDUCED_FILE_STR))
     if reduced_file_path.exists():
         reduced_file_path.unlink()
+
+    """
+    reduced_file_path2 = Path(Path(REDUCED_FILE_STR_2))
+    if reduced_file_path2.exists():
+        reduced_file_path2.unlink()
+    """
 
     test_results_dir_path = Path(TEST_RESULTS_DIR_STR)
     if test_results_dir_path.exists():

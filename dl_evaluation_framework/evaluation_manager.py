@@ -934,7 +934,7 @@ class EvaluationManager:
         reduced_vector_file_to_write: str,
         entities_of_interest: Union[Set[str], str],
     ) -> None:
-        """
+        """Write a new vector file that contains only a desired subset of vectors.
 
         Parameters
         ----------
@@ -966,11 +966,12 @@ class EvaluationManager:
                 file_to_read_from=entities_of_interest
             )
 
-        with open(
-            reduced_vector_file_to_write, "w+", encoding="utf-8"
-        ) as file_to_write:
-
-            def process_with_encoding(encoding: str):
+        def process_with_encoding(encoding: str):
+            with open(
+                reduced_vector_file_to_write,
+                "w+",
+                encoding="utf-8",  # note: w+ will overwrite (this is what we want)
+            ) as file_to_write:
                 with open(original_vector_file, "r", encoding=encoding) as file_to_read:
                     for line in file_to_read:
                         line_elements = line.split(" ")
@@ -978,8 +979,8 @@ class EvaluationManager:
                             if line_elements[0] in entities_of_interest:
                                 file_to_write.write(line)
 
-            try:
-                process_with_encoding(encoding="utf-8")
-            except UnicodeDecodeError as ude:
-                logger.error("A unicode error occurred. Trying latin-1 next.", ude)
-                process_with_encoding(encoding="latin-1")
+        try:
+            process_with_encoding(encoding="utf-8")
+        except UnicodeDecodeError as ude:
+            logger.error("A unicode error occurred. Trying latin-1 next.", ude)
+            process_with_encoding(encoding="latin-1")
