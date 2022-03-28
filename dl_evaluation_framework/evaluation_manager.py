@@ -491,7 +491,6 @@ class EvaluationManager:
                         tcg_agg_result = pd.concat(
                             [result_row, tcg_agg_result], ignore_index=True
                         )
-
         return tcg_agg_result
 
     @staticmethod
@@ -765,62 +764,101 @@ class EvaluationManager:
                                 f"Skipping '{sub_tc_dir.resolve()}' (not in sub_tc)"
                             )
                             continue
+
+                    # train_test:
                     train_test_path = sub_tc_dir.joinpath("train_test")
-                    if not train_test_path.exists():
-                        logger.warning(
-                            f"Could not find '{train_test_path}'. Continue evaluation."
-                        )
-                        continue
-
-                    try:
-                        eval_result = classifier.evaluate(
-                            data_directory=train_test_path, vectors=vector_map
-                        )
-                    except ValueError as error:
-                        logger.error(
-                            f"An error occurred with classifier {classifier} using {vector_tuple.vector_name} "
-                            f"on directory {train_test_path}. Evaluation continues.",
-                            error,
-                        )
-                        continue
-
-                    if eval_result is None:
-                        logger.warning(
-                            f"Could not determine result for {vector_tuple.vector_name} "
-                            f"on {train_test_path}"
-                        )
-                        continue
-
-                    missing_set.update(eval_result.missed)
-
-                    result_row = pd.DataFrame(
-                        data=[
-                            (
-                                # TC Collection:
-                                tc_collection_dir.name,
-                                # TC Group:
-                                tc_dir.name,
-                                # TC Size Group:
-                                sub_tc_dir.name,
-                                # TC Actual Size:
-                                eval_result.gs_size,
-                                # "Vector Name"
-                                vector_tuple.vector_name,
-                                # Classifier
-                                eval_result.classifier_name,
-                                # Accuracy
-                                eval_result.accuracy,
-                                # # missing URLs
-                                eval_result.number_missed,
-                                # "Vector Path"
-                                vector_tuple.vector_path,
-                            )
-                        ],
-                        columns=result.columns,
+                    result = EvaluationManager.__add_classifier_result_row(
+                        train_test_path=train_test_path,
+                        vector_map=vector_map,
+                        vector_tuple=vector_tuple,
+                        classifier=classifier,
+                        missing_set=missing_set,
+                        result=result,
+                        tc_collection_name=tc_collection_dir.name,
+                        tc_dir_name=tc_dir.name,
+                        sub_tc_dir_name=sub_tc_dir.name,
                     )
-                    result = pd.concat([result, result_row], axis=0, ignore_index=True)
+
+                    train_test_path_hard = sub_tc_dir.joinpath("train_test_hard")
+                    if train_test_path_hard.exists():
+                        # we do not want warnings if there is no hard case since this may appear often
+                        result = EvaluationManager.__add_classifier_result_row(
+                            train_test_path=train_test_path_hard,
+                            vector_map=vector_map,
+                            vector_tuple=vector_tuple,
+                            classifier=classifier,
+                            missing_set=missing_set,
+                            result=result,
+                            tc_collection_name=tc_collection_dir.name + "_hard",
+                            tc_dir_name=tc_dir.name,
+                            sub_tc_dir_name=sub_tc_dir.name,
+                        )
 
         return ResultMissingTuple(result=result, missing=missing_set)
+
+    @staticmethod
+    def __add_classifier_result_row(
+        train_test_path: Path,
+        vector_map: Dict[str, np.ndarray],
+        vector_tuple: VectorTuple,
+        classifier: ClassificationEvaluator,
+        missing_set: Set[str],
+        result: pd.DataFrame,
+        tc_collection_name: str,
+        tc_dir_name: str,
+        sub_tc_dir_name: str,
+    ) -> Union[pd.DataFrame]:
+        if not train_test_path.exists():
+            logger.warning(f"Could not find '{train_test_path}'. Continue evaluation.")
+            return result
+
+        try:
+            eval_result = classifier.evaluate(
+                data_directory=train_test_path, vectors=vector_map
+            )
+        except ValueError as error:
+            logger.error(
+                f"An error occurred with classifier {classifier} using {vector_tuple.vector_name} "
+                f"on directory {train_test_path}. Evaluation continues.",
+                error,
+            )
+            return result
+
+        if eval_result is None:
+            logger.warning(
+                f"Could not determine result for {vector_tuple.vector_name} "
+                f"on {train_test_path}"
+            )
+            return result
+
+        missing_set.update(eval_result.missed)
+
+        result_row = pd.DataFrame(
+            data=[
+                (
+                    # TC Collection:
+                    tc_collection_name,
+                    # TC Group:
+                    tc_dir_name,
+                    # TC Size Group:
+                    sub_tc_dir_name,
+                    # TC Actual Size:
+                    eval_result.gs_size,
+                    # "Vector Name"
+                    vector_tuple.vector_name,
+                    # Classifier
+                    eval_result.classifier_name,
+                    # Accuracy
+                    eval_result.accuracy,
+                    # # missing URLs
+                    eval_result.number_missed,
+                    # "Vector Path"
+                    vector_tuple.vector_path,
+                )
+            ],
+            columns=result.columns,
+        )
+        return pd.concat([result, result_row], axis=0, ignore_index=True)
 
     def write_uris_of_interest_to_file(self, file_to_write: str) -> None:
         """Write relevant URIs to a UTF-8 encoded file (one URI per line).
