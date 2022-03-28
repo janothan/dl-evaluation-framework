@@ -212,11 +212,9 @@ def teardown_module(module):
     if reduced_file_path.exists():
         reduced_file_path.unlink()
 
-    """
     reduced_file_path2 = Path(Path(REDUCED_FILE_STR_2))
     if reduced_file_path2.exists():
         reduced_file_path2.unlink()
-    """
 
     test_results_dir_path = Path(TEST_RESULTS_DIR_STR)
     if test_results_dir_path.exists():
