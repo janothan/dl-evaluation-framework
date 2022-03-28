@@ -1,0 +1,10 @@
+http://dbpedia.org/resource/Euryarchaeota	1
+http://dbpedia.org/resource/Vendobionta	1
+http://dbpedia.org/resource/Sphingobacteria_(phylum)	1
+http://dbpedia.org/resource/Gracilicutes	1
+http://dbpedia.org/resource/Chromista	1
+http://dbpedia.org/resource/Pseudoparasitus	0
+http://dbpedia.org/resource/Pseudoduganella	0
+http://dbpedia.org/resource/Coccothera	0
+http://dbpedia.org/resource/Cytocanis	0
+http://dbpedia.org/resource/Moserius_percoi	0

@@ -817,11 +817,17 @@ class EvaluationManager:
                 data_directory=train_test_path, vectors=vector_map
             )
         except ValueError as error:
-            logger.error(
-                f"An error occurred with classifier {classifier} using {vector_tuple.vector_name} "
-                f"on directory {train_test_path}. Evaluation continues.",
-                error,
-            )
+            try:
+                logger.error(
+                    f"An error occurred with classifier {classifier} using {vector_tuple.vector_name} "
+                    f"on directory {train_test_path}. Evaluation continues.",
+                    error,
+                )
+            except TypeError:
+                logger.error(
+                    f"An error occurred with classifier {classifier} using {vector_tuple.vector_name}"
+                    f"on directory {train_test_path}. The error cannot further be specified. Evaluation continues."
+                )
             return result
 
         if eval_result is None:

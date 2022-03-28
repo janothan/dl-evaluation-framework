@@ -10,6 +10,7 @@ RESULTS_DIR_EXISTS_STR = "./results_dir_exists"
 INTERESTED_NODES_STR = "./uris_of_interest.txt"
 REDUCED_FILE_STR = "./reduced_vectors.txt"
 REDUCED_FILE_STR_2 = "./reduced_vectors_2.txt"
+HARD_RESULTS_DIR = "./test_hard_results_dir"
 
 
 def test_results_dir_exists():
@@ -106,6 +107,94 @@ def test_reduce_vectors2():
     assert blank_lines <= 1
     vects = EvaluationManager.read_vector_txt_file(REDUCED_FILE_STR_2)
     assert len(vects) == 3
+
+
+def test_evaluate_hard():
+    em = EvaluationManager(test_directory="./tests/test_files/hard_query_results")
+    em.evaluate(
+        vector_names_and_files=[
+            VectorTuple(
+                vector_path="./tests/test_files/reduced_test_vectors_hard.txt",
+                vector_name="reduced_test_vectors_hard",
+            ),
+        ],
+        result_directory=HARD_RESULTS_DIR,
+    )
+
+    # make sure files were written
+    individual_results_path = Path(HARD_RESULTS_DIR).joinpath("individual_results.csv")
+    assert individual_results_path.exists()
+    individual_df = pd.read_csv(filepath_or_buffer=individual_results_path)
+    rows, cols = individual_df.shape
+    assert rows > 0
+    assert cols > 0
+
+    rows, cols = individual_df.loc[individual_df["TC Collection"] == "tc02_hard"].shape
+    assert rows > 0
+    assert cols > 0
+
+    rows, cols = individual_df.loc[individual_df["TC Collection"] == "tc01_hard"].shape
+    assert rows > 0
+    assert cols > 0
+
+    # negative test
+    rows, cols = individual_df.loc[individual_df["TC Collection"] == "not-exist"].shape
+    assert rows == 0
+
+    tcc_results_path = Path(HARD_RESULTS_DIR).joinpath("tc_collection_results.csv")
+    assert tcc_results_path.exists()
+    tcc_df = pd.read_csv(filepath_or_buffer=tcc_results_path)
+    rows, cols = tcc_df.shape
+    assert rows > 0
+    assert cols > 0
+
+    tcg_results_path = Path(HARD_RESULTS_DIR).joinpath("tc_group_results.csv")
+    assert tcg_results_path.exists()
+    tcg_df = pd.read_csv(filepath_or_buffer=tcg_results_path)
+    rows, cols = tcg_df.shape
+    assert rows > 0
+    assert cols > 0
+
+    missing_results_path = Path(HARD_RESULTS_DIR).joinpath("missing_urls.csv")
+    assert missing_results_path.exists()
+    missing_df = pd.read_csv(filepath_or_buffer=missing_results_path)
+    rows, cols = missing_df.shape
+    assert rows >= 0
+    assert cols >= 0
+
+    best_tcc_results_path = Path(HARD_RESULTS_DIR).joinpath(
+        "best_tc_collection_results.csv"
+    )
+    assert best_tcc_results_path.exists()
+    best_tcc_df = pd.read_csv(filepath_or_buffer=best_tcc_results_path)
+    rows, cols = best_tcc_df.shape
+    assert rows > 0
+    assert cols > 0
+
+    best_tcg_results_path = Path(HARD_RESULTS_DIR).joinpath("best_tc_group_results.csv")
+    assert best_tcg_results_path.exists()
+    best_tcg_df = pd.read_csv(filepath_or_buffer=best_tcg_results_path)
+    rows, cols = best_tcg_df.shape
+    assert rows > 0
+    assert cols > 0
+
+    best_tcc_comparison_path = Path(HARD_RESULTS_DIR).joinpath(
+        "comparison_best_tc_collection_results.csv"
+    )
+    assert best_tcc_comparison_path.exists()
+    best_tcc_comparison_df = pd.read_csv(filepath_or_buffer=best_tcc_comparison_path)
+    rows, cols = best_tcc_comparison_df.shape
+    assert rows > 0
+    assert cols > 0
+
+    best_tcg_comparison_path = Path(HARD_RESULTS_DIR).joinpath(
+        "comparison_best_tc_group_results.csv"
+    )
+    assert best_tcg_comparison_path.exists()
+    best_tcg_comparison_df = pd.read_csv(filepath_or_buffer=best_tcg_comparison_path)
+    rows, cols = best_tcg_comparison_df.shape
+    assert rows > 0
+    assert cols > 0
 
 
 def test_evaluate():
@@ -219,3 +308,7 @@ def teardown_module(module):
     test_results_dir_path = Path(TEST_RESULTS_DIR_STR)
     if test_results_dir_path.exists():
         shutil.rmtree(test_results_dir_path)
+
+    test_hard_results_path = Path(HARD_RESULTS_DIR)
+    if test_hard_results_path.exists():
+        shutil.rmtree(test_hard_results_path)

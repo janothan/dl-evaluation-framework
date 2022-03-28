@@ -1,0 +1,10 @@
+http://dbpedia.org/resource/Euryarchaeota	1
+http://dbpedia.org/resource/Vendobionta	1
+http://dbpedia.org/resource/Sphingobacteria_(phylum)	1
+http://dbpedia.org/resource/Gracilicutes	1
+http://dbpedia.org/resource/Chromista	1
+http://dbpedia.org/resource/Givira_saladota	0
+http://dbpedia.org/resource/Pachycerosia	0
+http://dbpedia.org/resource/Tulcus_distinctus	0
+http://dbpedia.org/resource/Calamoschoena	0
+http://dbpedia.org/resource/Morphodaclyla	0

@@ -1,0 +1,2 @@
+http://dbpedia.org/resource/Crenarchaeota	1
+http://dbpedia.org/resource/Syncopacma_consimilis	0
