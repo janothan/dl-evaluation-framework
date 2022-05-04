@@ -1,8 +1,6 @@
 # ML Evaluation Module for DL Gold Standard
-[![Python CI](https://github.com/janothan/dl-evaluation-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/janothan/dl-evaluation-framework/actions/workflows/ci.yml)
-[![Lint](https://github.com/janothan/dl-evaluation-framework/actions/workflows/black.yml/badge.svg)](https://github.com/janothan/dl-evaluation-framework/actions/workflows/black.yml)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Pre-Commit Enabled](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
+[![Python CI](https://github.com/janothan/dl-evaluation-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/janothan/dl-evaluation-framework/actions/workflows/ci.yml) [![Lint](https://github.com/janothan/dl-evaluation-framework/actions/workflows/black.yml/badge.svg)](https://github.com/janothan/dl-evaluation-framework/actions/workflows/black.yml) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![Pre-Commit Enabled](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
+
 
 A framework to evaluate knowledge graph embeddings on description logics test cases.
 You can generate or download the gold standard using [this project](https://github.com/janothan/DBpediaTestCaseGenerator/).
